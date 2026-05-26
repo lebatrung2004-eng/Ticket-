@@ -2040,15 +2040,15 @@
             lucide.createIcons();
         }
 
-        // Hàm dựng List Phim giải trí vui vẻ lên màn hình
+        // Hàm dựng List Phim giải trí vui vẻ lên màn hình (Hiển thị 6 phim mặc định thay vì 4)
         function renderEntertainmentMovies() {
             const elements = getElements();
             if (!elements.entertainmentMoviesGrid) return;
             
             elements.entertainmentMoviesGrid.innerHTML = '';
             
-            // Nếu ở chế độ thu gọn: chỉ hiển thị 4 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
-            const moviesToRender = expandedCategory === 'entertainment' ? entertainmentMoviesData : entertainmentMoviesData.slice(0, 4);
+            // Nếu ở chế độ thu gọn: hiển thị 6 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
+            const moviesToRender = expandedCategory === 'entertainment' ? entertainmentMoviesData : entertainmentMoviesData.slice(0, 6);
 
             moviesToRender.forEach((movie, index) => {
                 const fallbackTitle = encodeURIComponent(movie.title.split(' ').slice(0, 3).join(' '));
@@ -2124,15 +2124,15 @@
             lucide.createIcons();
         }
 
-        // Hàm dựng List Phim chữa lành lên màn hình
+        // Hàm dựng List Phim chữa lành lên màn hình (Hiển thị 6 phim mặc định thay vì 4)
         function renderHealingMovies() {
             const elements = getElements();
             if (!elements.healingMoviesGrid) return;
             
             elements.healingMoviesGrid.innerHTML = '';
             
-            // Nếu ở chế độ thu gọn: chỉ hiển thị 4 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
-            const moviesToRender = expandedCategory === 'healing' ? healingMoviesData : healingMoviesData.slice(0, 4);
+            // Nếu ở chế độ thu gọn: hiển thị 6 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
+            const moviesToRender = expandedCategory === 'healing' ? healingMoviesData : healingMoviesData.slice(0, 6);
 
             moviesToRender.forEach((movie, index) => {
                 const fallbackTitle = encodeURIComponent(movie.title.split(' ').slice(0, 3).join(' '));
@@ -2803,11 +2803,35 @@
             });
         }
 
+        // TÍNH NĂNG CUỘN NGANG BẰNG CON LĂN CHUỘT
+        function setupHorizontalScroll() {
+            const grids = [
+                document.getElementById('entertainmentMoviesGrid'),
+                document.getElementById('healingMoviesGrid')
+            ];
+            
+            grids.forEach(grid => {
+                if (grid) {
+                    grid.addEventListener('wheel', function(e) {
+                        // Chỉ can thiệp khi danh sách đang ở chế độ cuộn ngang (chưa bấm "Xem tất cả")
+                        if (this.classList.contains('overflow-x-auto')) {
+                            // Nếu có thao tác lăn chuột lên/xuống (deltaY)
+                            if (e.deltaY !== 0) {
+                                e.preventDefault(); // Ngăn chặn hành vi cuộn trang dọc mặc định
+                                this.scrollLeft += e.deltaY; // Chuyển sang cuộn ngang
+                            }
+                        }
+                    }, { passive: false }); // Cần set passive: false để có thể gọi e.preventDefault()
+                }
+            });
+        }
+
         // Initialize App & Auth setup on loading
         window.addEventListener('DOMContentLoaded', async () => {
             renderEntertainmentMovies();
             renderHealingMovies();
             setupInputMarquees();
+            setupHorizontalScroll();
             await initAuthentication();
         });
 
