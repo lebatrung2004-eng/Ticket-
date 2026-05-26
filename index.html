@@ -1,0 +1,2948 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ticket + | Khám Phá Điện Ảnh & Kết Nối Đồng Hành</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            DEFAULT: '#E50914', // Đỏ rạp phim Netflix
+                            dark: '#B20710',
+                            black: '#030509', // Sắc đen điện ảnh sâu thẳm hơn
+                            gray: '#0a0d16', // Xanh đen màn đêm tĩnh mịch mới
+                            lightGray: '#121824' // Xám xanh sâu thẳm mới
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            background-color: #030509;
+            /* Phối cảnh rạp phim cao cấp: Luồng chiếu sáng đỏ rực hắt từ đỉnh đầu, 
+               kèm hào quang xanh saphire bên trái và ánh tím huyền ảo ở góc dưới bên phải */
+            background-image: 
+                radial-gradient(circle at 50% -20%, rgba(229, 9, 20, 0.42) 0%, transparent 60%),
+                radial-gradient(circle at 15% 35%, rgba(59, 130, 246, 0.18) 0%, transparent 55%),
+                radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.15) 0%, transparent 65%),
+                radial-gradient(circle at 50% 50%, rgba(10, 13, 22, 0.6) 0%, #030509 100%);
+            background-attachment: fixed;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+        
+        /* Custom Scrollbar phong cách cao cấp */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #030509; 
+        }
+        ::-webkit-scrollbar-turn {
+            background: #030509;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #121824; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #E50914; 
+        }
+
+        .glass-panel {
+            background: rgba(3, 5, 9, 0.78);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .movie-card, .buddy-card {
+            background: rgba(10, 13, 22, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-color: rgba(255, 255, 255, 0.03);
+            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.4s ease, border-color 0.4s ease, background-color 0.4s ease;
+        }
+        
+        .movie-card:hover, .buddy-card:hover {
+            transform: translateY(-5px) scale(1.01);
+            background: rgba(18, 24, 36, 0.85);
+            box-shadow: 0 15px 35px rgba(229, 9, 20, 0.15), 0 0 15px rgba(59, 130, 246, 0.05);
+            border-color: rgba(229, 9, 20, 0.45);
+        }
+        
+        /* Hero background gradient và hiệu ứng màu sắc nổi bật */
+        .hero-bg {
+            background: linear-gradient(to bottom, rgba(3,5,9,0.05) 0%, rgba(3,5,9,0.85) 60%, #030509 100%), 
+                        url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=2070&auto=format&fit=crop') center/cover;
+        }
+        
+        /* Modal & Tab Animation transition states */
+        .tab-content {
+            transition: opacity 0.2s ease-in-out;
+        }
+
+        /* Shimmer effect for status indicators */
+        @keyframes pulse-gaze {
+            0%, 100% { opacity: 0.6; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.1); }
+        }
+        .pulse-indicator {
+            animation: pulse-gaze 2s infinite ease-in-out;
+        }
+        
+        /* Spin Animation for refresh */
+        @keyframes spin-once {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .spin-active {
+            animation: spin-once 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Ẩn scrollbar thô sơ của trình duyệt nhưng vẫn cho phép cuộn ngang */
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+
+        /* Cấu hình để chữ chạy trong input mượt mà không bị dấu chấm lửng */
+        #buddyControls input::placeholder {
+            text-overflow: clip;
+            white-space: pre;
+        }
+        #buddyControls input {
+            text-overflow: clip;
+        }
+    </style>
+</head>
+<body class="antialiased font-sans">
+
+    <!-- Toast Notification for Actions -->
+    <div id="toastNotification" class="fixed bottom-5 right-5 z-[200] transform translate-y-10 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="bg-emerald-500 text-white font-semibold px-4 py-3 rounded-xl shadow-2xl flex items-center gap-2">
+            <i data-lucide="check-circle" class="w-5 h-5"></i>
+            <span id="toastMessage">Đã lưu vào danh sách xem sau!</span>
+        </div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="fixed w-full z-50 glass-panel">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0 flex items-center cursor-pointer" onclick="switchTab('movies')">
+                    <i data-lucide="ticket" class="text-brand w-8 h-8 mr-2"></i>
+                    <span class="font-extrabold text-2xl tracking-tight">Ticket <span class="text-brand">+</span></span>
+                </div>
+                <!-- Navigation Tabs -->
+                <div class="flex items-center space-x-1 sm:space-x-4">
+                    <button id="tabMoviesBtn" onclick="switchTab('movies')" class="px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand transition flex items-center gap-1.5 shadow-md shadow-brand/20">
+                        <i data-lucide="search" class="w-4 h-4"></i> Khám Phá Phim
+                    </button>
+                    <button id="tabAiBtn" onclick="switchTab('ai')" class="px-4 py-2 rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 relative">
+                        <i data-lucide="bot" class="w-4 h-4"></i> Gợi ý phim
+                    </button>
+                    <button id="tabBuddyBtn" onclick="switchTab('buddy')" class="px-4 py-2 rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 relative">
+                        <i data-lucide="users" class="w-4 h-4"></i> Tìm Bạn Xem Phim
+                        <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
+                            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75"></span>
+                            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-brand"></span>
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- App Header / Hero Area -->
+    <div class="hero-bg min-h-[52vh] flex flex-col justify-center items-center px-4 pt-20 relative overflow-hidden">
+        
+        <!-- HIỆU ỨNG ÁNH SÁNG NỔI BẬT KHU VỰC TIÊU ĐỀ -->
+        <div class="absolute top-10 left-[15%] w-96 h-96 rounded-full bg-red-600/15 blur-[120px] pointer-events-none z-0"></div>
+        <div class="absolute top-[20%] left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full bg-gradient-to-r from-blue-500/15 via-purple-600/20 to-red-500/10 blur-[130px] pointer-events-none z-0"></div>
+        <div class="absolute bottom-20 right-[10%] w-80 h-80 rounded-full bg-emerald-500/10 blur-[110px] pointer-events-none z-0"></div>
+
+        <div class="text-center max-w-7xl w-full z-10 px-4 relative mt-6">
+            <h1 id="heroTitle" class="text-4xl md:text-6xl font-extrabold mb-4 drop-shadow-xl tracking-tight text-shadow-lg" style="text-shadow: 0 4px 20px rgba(0, 0, 0, 0.65);">
+                Phim hay <span class="text-brand">trong tầm tay</span>
+            </h1>
+            <p id="heroSubtext" class="text-base md:text-xl text-gray-200 mb-8 max-w-2xl mx-auto drop-shadow-lg" style="text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);">
+                Hãy để thế giới điện ảnh xoa dịu tâm hồn bạn
+            </p>
+            
+            <!-- LIST PHIM GIẢI TRÍ VUI VẺ SECTION -->
+            <div id="entertainmentMoviesSection" class="mb-10 text-left transition-all duration-300 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-5 border-l-4 border-brand pl-3">
+                    <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleExpandCategory('entertainment')">
+                        <h2 class="text-lg md:text-xl font-bold text-white group-hover:text-brand transition duration-300">List Phim giải trí vui vẻ</h2>
+                        <i data-lucide="laugh" class="w-5 h-5 text-yellow-500 animate-pulse"></i>
+                        <span id="entBtnExpand" class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-2.5 py-1 rounded-full transition ml-2 flex items-center gap-1">
+                            Xem tất cả <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+                </div>
+                <!-- Mặc định cuộn ngang mượt mà, khi mở rộng sẽ đổi class bằng JS thành Grid -->
+                <div id="entertainmentMoviesGrid" class="flex gap-4 lg:gap-5 overflow-x-auto pb-4 snap-x scroll-smooth no-scrollbar w-full">
+                    <!-- Dynamic Entertainment Movie cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- LIST PHIM CHỮA LÀNH SECTION -->
+            <div id="healingMoviesSection" class="mb-10 text-left transition-all duration-300 w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between mb-5 border-l-4 border-emerald-500 pl-3">
+                    <div class="flex items-center gap-2 cursor-pointer group" onclick="toggleExpandCategory('healing')">
+                        <h2 class="text-lg md:text-xl font-bold text-white group-hover:text-emerald-400 transition duration-300">List Phim chữa lành</h2>
+                        <i data-lucide="leaf" class="w-5 h-5 text-emerald-500"></i>
+                        <span id="healBtnExpand" class="text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-2.5 py-1 rounded-full transition ml-2 flex items-center gap-1">
+                            Xem tất cả <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                        </span>
+                    </div>
+                </div>
+                <!-- Mặc định cuộn ngang mượt mà, khi mở rộng sẽ đổi class bằng JS thành Grid -->
+                <div id="healingMoviesGrid" class="flex gap-4 lg:gap-5 overflow-x-auto pb-4 snap-x scroll-smooth no-scrollbar w-full">
+                    <!-- Dynamic Healing Movie cards will be loaded here -->
+                </div>
+            </div>
+
+            <!-- Movie Search Panel (Visible on Movie Tab) -->
+            <div id="movieSearchContainer" class="relative w-full max-w-2xl mx-auto group">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i data-lucide="search" class="text-gray-400 group-focus-within:text-brand transition"></i>
+                </div>
+                <input 
+                    type="text" 
+                    id="searchInput" 
+                    class="block w-full pl-12 pr-32 py-4 rounded-full bg-brand-gray/80 border border-gray-600 focus:border-brand focus:ring focus:ring-brand/30 focus:outline-none text-white placeholder-gray-400 backdrop-blur-md transition text-base md:text-lg shadow-xl"
+                    placeholder="Nhập tên phim cần tìm kiếm..."
+                    autocomplete="off"
+                >
+                <button 
+                    id="searchBtn"
+                    class="absolute inset-y-1.5 right-1.5 px-6 bg-brand hover:bg-brand-dark text-white font-semibold rounded-full transition shadow-md flex items-center text-sm md:text-base"
+                >
+                    Tìm kiếm
+                </button>
+            </div>
+
+            <!-- Movie Filter Panel -->
+            <div id="movieFilterContainer" class="mt-5 flex flex-wrap justify-center gap-3 w-full max-w-4xl mx-auto">
+                <div class="relative group flex-1 min-w-[140px] max-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="film" class="w-4 h-4 text-gray-400 group-focus-within:text-brand transition"></i>
+                    </div>
+                    <select id="filterGenre" class="appearance-none block w-full bg-brand-gray/80 border border-gray-600 text-white text-sm rounded-full pl-10 pr-10 py-3 focus:border-brand focus:ring focus:ring-brand/30 focus:outline-none backdrop-blur-md cursor-pointer hover:bg-gray-800 transition shadow-lg">
+                        <option value="">Tất cả thể loại</option>
+                        <option value="Hành động">Hành động</option>
+                        <option value="Tình cảm">Tình cảm</option>
+                        <option value="Kinh dị">Kinh dị</option>
+                        <option value="Hài hước">Hài hước</option>
+                        <option value="Viễn tưởng">Viễn tưởng</option>
+                        <option value="Hoạt hình">Hoạt hình</option>
+                        <option value="Tâm lý">Tâm lý / Drama</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="relative group flex-1 min-w-[140px] max-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="globe" class="w-4 h-4 text-gray-400 group-focus-within:text-brand transition"></i>
+                    </div>
+                    <select id="filterCountry" class="appearance-none block w-full bg-brand-gray/80 border border-gray-600 text-white text-sm rounded-full pl-10 pr-10 py-3 focus:border-brand focus:ring focus:ring-brand/30 focus:outline-none backdrop-blur-md cursor-pointer hover:bg-gray-800 transition shadow-lg">
+                        <option value="">Mọi quốc gia</option>
+                        <option value="Việt Nam">Việt Nam</option>
+                        <option value="Hàn Quốc">Hàn Quốc</option>
+                        <option value="Mỹ / Hollywood">Âu Mỹ</option>
+                        <option value="Nhật Bản">Nhật Bản</option>
+                        <option value="Trung Quốc">Trung Quốc</option>
+                        <option value="Thái Lan">Thái Lan</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+
+                <div class="relative group flex-1 min-w-[140px] max-w-[200px]">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="monitor-play" class="w-4 h-4 text-gray-400 group-focus-within:text-brand transition"></i>
+                    </div>
+                    <select id="filterFormat" class="appearance-none block w-full bg-brand-gray/80 border border-gray-600 text-white text-sm rounded-full pl-10 pr-10 py-3 focus:border-brand focus:ring focus:ring-brand/30 focus:outline-none backdrop-blur-md cursor-pointer hover:bg-gray-800 transition shadow-lg">
+                        <option value="">Mọi định dạng</option>
+                        <option value="Phim chiếu rạp (Movie)">Phim chiếu rạp</option>
+                        <option value="Phim bộ dài tập (TV Series)">Phim bộ</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 flex items-center pr-3.5 pointer-events-none text-gray-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Movie Suggestions (Only visible on Movie Tab) -->
+            <div id="movieSuggestions" class="mt-4 flex flex-wrap justify-center gap-2 text-xs md:text-sm text-gray-400">
+                <span>Gợi ý phổ biến:</span>
+                <button class="hover:text-white transition underline decoration-brand/40 decoration-2 underline-offset-4" onclick="setSearch('Interstellar')">Interstellar</button> •
+                <button class="hover:text-white transition underline decoration-brand/40 decoration-2 underline-offset-4" onclick="setSearch('Dune: Part Two')">Dune: Part Two</button> •
+                <button class="hover:text-white transition underline decoration-brand/40 decoration-2 underline-offset-4" onclick="setSearch('Deadpool & Wolverine')">Deadpool & Wolverine</button>
+            </div>
+
+            <!-- Buddy Header Controls (Only visible on Buddy Tab) - 4 Bộ lọc: Phim, Rạp, Thời gian, Tên Người đăng và nút Đăng tin -->
+            <div id="buddyControls" class="hidden flex-col md:flex-row justify-center items-center gap-3 w-full max-w-6xl mx-auto bg-black/60 p-4 rounded-3xl border border-gray-800/80 backdrop-blur-md shadow-2xl">
+                
+                <!-- Bộ lọc 1: Theo Phim -->
+                <div class="relative w-full md:flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="clapperboard" class="w-4 h-4 text-brand"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="buddyMovieFilterInput" 
+                        class="block w-full pl-10 pr-4 py-3 rounded-full bg-brand-gray/90 border border-gray-700 focus:border-brand focus:outline-none text-white text-xs placeholder-gray-400"
+                        placeholder="Tìm theo tên phim..."
+                    >
+                </div>
+
+                <!-- Bộ lọc 2: Theo Rạp -->
+                <div class="relative w-full md:flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="map-pin" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="buddyLocationFilterInput" 
+                        class="block w-full pl-10 pr-4 py-3 rounded-full bg-brand-gray/90 border border-gray-700 focus:border-brand focus:outline-none text-white text-xs placeholder-gray-400"
+                        placeholder="Tìm theo rạp, địa điểm..."
+                    >
+                </div>
+
+                <!-- Bộ lọc 3: Theo Thời gian -->
+                <div class="relative w-full md:flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="clock" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="buddyTimeFilterInput" 
+                        class="block w-full pl-10 pr-4 py-3 rounded-full bg-brand-gray/90 border border-gray-700 focus:border-brand focus:outline-none text-white text-xs placeholder-gray-400"
+                        placeholder="Tìm theo thời gian chiếu..."
+                    >
+                </div>
+
+                <!-- Bộ lọc 4: Theo Tên Người đăng -->
+                <div class="relative w-full md:flex-1">
+                    <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-400"></i>
+                    </div>
+                    <input 
+                        type="text" 
+                        id="buddyNameFilterInput" 
+                        class="block w-full pl-10 pr-4 py-3 rounded-full bg-brand-gray/90 border border-gray-700 focus:border-brand focus:outline-none text-white text-xs placeholder-gray-400"
+                        placeholder="Tìm theo tên người đăng..."
+                    >
+                </div>
+
+                <!-- Các nút hành động -->
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end shrink-0">
+                    <!-- Refresh Button -->
+                    <button 
+                        id="refreshBuddyBtn"
+                        onclick="refreshBuddyRequests()"
+                        class="p-3 bg-brand-gray hover:bg-white/10 text-white rounded-full transition border border-gray-700 relative group"
+                        title="Làm mới danh sách đồng hành"
+                    >
+                        <i data-lucide="rotate-cw" id="refreshIcon" class="w-5 h-5"></i>
+                    </button>
+
+                    <!-- Add invitation Button (ĐĂNG TIN) -->
+                    <button 
+                        onclick="openBuddyPostModal()"
+                        class="flex-1 md:flex-none px-6 py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-full transition shadow-lg shadow-brand/30 flex items-center justify-center gap-1.5 text-sm whitespace-nowrap animate-pulse hover:animate-none"
+                    >
+                        <i data-lucide="plus" class="w-4 h-4"></i> Đăng Tin
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Gradient fade to bottom -->
+        <div class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-brand-black to-transparent pointer-events-none"></div>
+    </div>
+
+    <!-- Main Content Tab Viewports -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[40vh]">
+        
+        <!-- ================= TAB 1: MOVIES EXPLORER ================= -->
+        <div id="tabMoviesContent" class="tab-content block">
+            
+            <!-- Status / Title -->
+            <div id="resultsHeader" class="mb-8 hidden">
+                <h2 class="text-2xl font-bold border-l-4 border-brand pl-3" id="resultsTitle">Kết quả tìm kiếm</h2>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="hidden flex-col items-center justify-center py-16">
+                <div class="relative w-16 h-16">
+                    <div class="absolute top-0 left-0 w-full h-full border-4 border-gray-800 rounded-full"></div>
+                    <div class="absolute top-0 left-0 w-full h-full border-4 border-brand rounded-full border-t-transparent animate-spin"></div>
+                    <i data-lucide="clapperboard" class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-brand w-6 h-6"></i>
+                </div>
+                <h3 class="mt-6 text-xl font-medium">Đang quét kho dữ liệu toàn cầu...</h3>
+                <p class="text-gray-400 mt-1 text-sm max-w-md text-center">Ticket+ đang tổng hợp thông tin từ thời gian thực, vui lòng chờ giây lát.</p>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="hidden flex-col items-center justify-center py-12 text-center bg-brand-gray/30 rounded-2xl border border-gray-800 max-w-xl mx-auto">
+                <div class="bg-red-500/10 p-3 rounded-full mb-3">
+                    <i data-lucide="alert-circle" class="w-10 h-10 text-brand"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-1">Đã xảy ra lỗi hệ thống</h3>
+                <p id="errorMsg" class="text-gray-400 text-sm">Không thể lấy dữ liệu lúc này. Vui lòng thử lại sau.</p>
+            </div>
+
+            <!-- Results Grid -->
+            <div id="resultsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Movie cards are dynamically loaded here -->
+            </div>
+
+            <!-- Empty State (Initial) -->
+            <div id="emptyState" class="text-center py-16 text-gray-500">
+                <i data-lucide="film" class="w-16 h-16 mx-auto mb-4 opacity-40"></i>
+                <h3 class="text-lg font-semibold text-gray-300">Khám Phá Vũ Trụ Điện Ảnh</h3>
+                <p class="text-sm text-gray-400 max-w-sm mx-auto mt-1">Tìm kiếm mọi tựa phim yêu thích để khám phá nội dung, dàn diễn viên, đánh giá và tìm kiếm bạn bè xem cùng.</p>
+            </div>
+        </div>
+
+        <!-- ================= TAB 2: MOVIE BUDDY MATCHMAKER ================= -->
+        <div id="tabBuddyContent" class="tab-content hidden">
+            <!-- Active Connections Status Banner -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8 bg-brand-gray/30 p-4 rounded-xl border border-gray-800">
+                <div class="flex items-center gap-3">
+                    <div class="w-3 h-3 rounded-full bg-emerald-500 pulse-indicator"></div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Hệ thống kết nối trực tuyến</h3>
+                        <p class="text-xs text-gray-400 flex items-center gap-1.5">
+                            Quét tín hiệu thời gian thực từ 100 người đam mê điện ảnh hoạt động hôm nay.
+                        </p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-2 bg-emerald-500/10 text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/20 text-xs font-semibold">
+                    <i data-lucide="wifi" class="w-3.5 h-3.5 animate-pulse"></i> Đồng bộ thời gian thực
+                </div>
+            </div>
+
+            <!-- Sub Tabs inside Tab 2 (Lọc Tất cả tin đăng và Tin đăng của tôi) -->
+            <div class="flex gap-6 border-b border-gray-800/80 mb-6 pb-px">
+                <button id="btnSubTabAll" onclick="window.switchBuddySubTab('all')" class="pb-3 text-sm font-bold border-b-2 border-brand text-brand transition-all duration-300">
+                    Tất cả tin đăng
+                </button>
+                <button id="btnSubTabMy" onclick="window.switchBuddySubTab('my')" class="pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition-all duration-300 flex items-center gap-2">
+                    Tin đăng của tôi
+                    <span id="myPostsCountBadge" class="bg-brand/20 text-brand text-[10px] px-2 py-0.5 rounded-full font-bold hidden">0</span>
+                </button>
+            </div>
+
+            <!-- Buddy Requests Grid -->
+            <div id="buddyRequestsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Buddy post cards injected here -->
+            </div>
+
+            <!-- Empty Buddy State -->
+            <div id="emptyBuddyState" class="hidden text-center py-20 text-gray-500 bg-brand-gray/20 rounded-2xl border border-dashed border-gray-800">
+                <i data-lucide="users-round" class="w-16 h-16 mx-auto mb-4 opacity-30"></i>
+                <h3 class="text-lg font-semibold text-gray-300">Không tìm thấy ai phù hợp bộ lọc</h3>
+                <p class="text-sm text-gray-400 max-w-sm mx-auto mt-1 mb-6">Hãy thử xóa từ khóa tìm kiếm hoặc nhấn nút Làm mới để xoay tua hiển thị những người dùng khác trong danh sách 100 thành viên trực tuyến.</p>
+                <button onclick="resetFiltersAndRefresh()" class="px-5 py-2.5 bg-brand hover:bg-brand-dark text-white rounded-lg font-bold transition">Hiển thị tất cả</button>
+            </div>
+        </div>
+
+        <!-- ================= TAB 3: AI CONCIERGE (GỢI Ý PHIM) ================= -->
+        <div id="tabAiContent" class="tab-content hidden max-w-4xl mx-auto h-[65vh] flex flex-col bg-brand-gray/30 rounded-2xl border border-gray-800 overflow-hidden shadow-2xl relative">
+            <!-- Header -->
+            <div class="p-4 border-b border-gray-800 bg-black/60 backdrop-blur-md flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-brand/20 flex items-center justify-center border border-brand/40">
+                        <i data-lucide="bot" class="w-5 h-5 text-brand"></i>
+                    </div>
+                    <div>
+                        <h3 class="font-bold text-white text-base">Trợ lý gợi ý phim</h3>
+                        <p class="text-xs text-gray-400 flex items-center gap-1.5">
+                            <span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span></span> Luôn sẵn sàng tư vấn
+                        </p>
+                    </div>
+                </div>
+                <button onclick="clearChat()" class="p-2 text-gray-400 hover:text-white transition" title="Xóa lịch sử chat">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Messages Area -->
+            <div id="chatMessages" class="flex-1 overflow-y-auto p-4 space-y-5 scroll-smooth">
+                <!-- Welcome Message -->
+                <div class="flex gap-3 max-w-[85%]">
+                    <div class="w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center border border-brand/40 shrink-0 mt-1">
+                        <i data-lucide="bot" class="w-4 h-4 text-brand"></i>
+                    </div>
+                    <div class="bg-gray-800/80 border border-gray-700 p-3.5 rounded-2xl rounded-tl-none text-sm text-gray-200 leading-relaxed">
+                        Chào bạn! 👋 Mình là trợ lý AI của Ticket+. Mình có thể giúp bạn tìm được bộ phim ưng ý nhất dựa trên sở thích, tâm trạng, hay thể loại bạn mong muốn. Hôm nay bạn muốn xem thể loại gì nào?
+                        
+                        <div class="mt-3 flex flex-wrap gap-2">
+                            <button onclick="sendQuickMessage('Gợi ý cho tôi một bộ phim hài hước giải trí cuối tuần.')" class="text-xs bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full transition text-gray-300">😂 Phim hài giải trí</button>
+                            <button onclick="sendQuickMessage('Mình đang buồn, có bộ phim nào chữa lành tâm hồn không?')" class="text-xs bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full transition text-gray-300">🌱 Phim chữa lành</button>
+                            <button onclick="sendQuickMessage('Liệt kê 3 bộ phim viễn tưởng hack não nhất.')" class="text-xs bg-white/10 hover:bg-white/20 border border-white/10 px-3 py-1.5 rounded-full transition text-gray-300">🌌 Viễn tưởng hack não</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Indicator (Hidden by default) -->
+            <div id="chatTypingIndicator" class="hidden p-4">
+                <div class="flex gap-3 max-w-[85%]">
+                    <div class="w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center border border-brand/40 shrink-0 mt-1">
+                        <i data-lucide="bot" class="w-4 h-4 text-brand"></i>
+                    </div>
+                    <div class="bg-gray-800/80 border border-gray-700 p-3.5 rounded-2xl rounded-tl-none flex items-center gap-1.5">
+                        <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce"></span>
+                        <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.2s"></span>
+                        <span class="w-2 h-2 rounded-full bg-gray-400 animate-bounce" style="animation-delay: 0.4s"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-4 border-t border-gray-800 bg-black/40 backdrop-blur-md shrink-0">
+                <form id="chatForm" class="relative flex items-center group">
+                    <input 
+                        type="text" 
+                        id="chatInput" 
+                        class="w-full bg-gray-900/80 border border-gray-700 text-white text-sm rounded-full pl-4 pr-12 py-3.5 focus:border-brand focus:ring focus:ring-brand/30 focus:outline-none transition"
+                        placeholder="Nhắn tin với AI để tìm phim..."
+                        autocomplete="off"
+                    >
+                    <button type="submit" class="absolute right-1.5 p-2 bg-brand hover:bg-brand-dark text-white rounded-full transition shadow-md flex items-center justify-center" title="Gửi tin nhắn">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-brand-black border-t border-gray-900 pt-12 pb-8 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <div class="flex items-center justify-center mb-6">
+                <i data-lucide="ticket" class="text-brand w-6 h-6 mr-2"></i>
+                <span class="font-bold text-xl">Ticket <span class="text-brand">+</span></span>
+            </div>
+            <p class="text-gray-400 text-sm mb-4 max-w-xl mx-auto">
+                Hệ thống dữ liệu điện ảnh thông minh tích hợp AI kết nối cộng đồng người xem toàn cầu.
+            </p>
+            <p class="text-gray-600 text-xs">
+                &copy; 2026 Ticket+. Thiết kế và phát triển đồng bộ thời gian thực.
+            </p>
+        </div>
+    </footer>
+
+    <!-- ================= MODAL 1: MOVIE DETAILS ================= -->
+    <div id="movieModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-md" id="modalBackdrop" onclick="window.closeModal()"></div>
+        
+        <!-- Modal Content -->
+        <div class="relative bg-brand-gray w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden border border-gray-700 flex flex-col max-h-[90vh]">
+            <button id="closeModalBtn" onclick="window.closeModal()" class="absolute top-4 left-4 p-2.5 bg-black/60 hover:bg-brand rounded-full text-white transition z-50 backdrop-blur-md flex items-center justify-center group" title="Quay lại">
+                <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+            </button>
+            
+            <div class="overflow-y-auto">
+                <div class="flex flex-col md:flex-row">
+                    <!-- Poster Column -->
+                    <div class="w-full md:w-1/3 bg-black relative min-h-[300px] md:min-h-full">
+                        <img id="modalPoster" src="" alt="Poster" class="absolute inset-0 w-full h-full object-cover opacity-80">
+                        <div class="absolute inset-0 bg-gradient-to-t from-brand-gray to-transparent md:hidden"></div>
+                        <div class="absolute inset-0 bg-gradient-to-r from-transparent to-brand-gray hidden md:block"></div>
+                    </div>
+                    
+                    <!-- Info Column -->
+                    <div class="w-full md:w-2/3 p-6 md:p-8 relative z-10">
+                        <div class="flex flex-wrap items-center gap-3 mb-2">
+                            <span id="modalYear" class="bg-white/10 text-white text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md"></span>
+                            <span id="modalRating" class="bg-brand/20 text-brand text-xs font-bold px-3 py-1 rounded-full border border-brand/50 flex items-center">
+                                <i data-lucide="star" class="w-3 h-3 mr-1 fill-brand text-brand"></i> <span id="modalRatingText"></span>
+                            </span>
+                            <!-- Thêm điểm IMDB -->
+                            <span id="modalImdb" class="hidden bg-[#f5c518] text-black text-xs font-extrabold px-3 py-1 rounded-full flex items-center shadow-sm">
+                                IMDb <span id="modalImdbText" class="ml-1.5"></span>
+                            </span>
+                            <!-- Thêm điểm Rotten Tomatoes -->
+                            <span id="modalRottenTomatoes" class="hidden bg-[#fa320a] text-white text-xs font-bold px-3 py-1 rounded-full flex items-center shadow-sm tracking-wide">
+                                🍅 <span id="modalRottenTomatoesText" class="ml-1"></span>
+                            </span>
+                        </div>
+                        
+                        <h2 id="modalTitle" class="text-3xl md:text-4xl font-extrabold mb-1 mt-2 text-white drop-shadow-md"></h2>
+                        <h3 id="modalOriginalTitle" class="text-gray-400 italic mb-6"></h3>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h4 class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Nội dung</h4>
+                                <p id="modalPlot" class="text-gray-200 leading-relaxed text-sm md:text-base"></p>
+                            </div>
+                            
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4 border-t border-gray-800">
+                                <div>
+                                    <h4 class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Đạo diễn</h4>
+                                    <p id="modalDirector" class="text-white font-medium"></p>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Thể loại</h4>
+                                    <div id="modalGenres" class="flex flex-wrap gap-2 mt-1"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="pt-2">
+                                <h4 class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Diễn viên chính</h4>
+                                <p id="modalActors" class="text-white text-sm leading-relaxed"></p>
+                            </div>
+                            
+                            <!-- Thêm Nền tảng chiếu -->
+                            <div id="modalPlatformsContainer" class="pt-3 hidden">
+                                <h4 class="text-sm text-gray-400 uppercase tracking-wider font-semibold mb-1">Nền tảng phát sóng</h4>
+                                <div id="modalPlatforms" class="flex flex-wrap gap-2 mt-1"></div>
+                            </div>
+
+                            <!-- Thêm Lịch chiếu tại VN -->
+                            <div id="modalShowtimesContainer" class="pt-4 mt-4 border-t border-gray-800 hidden">
+                                <div class="flex items-center gap-2 mb-1.5">
+                                    <div class="relative flex h-3 w-3">
+                                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                      <span class="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
+                                    </div>
+                                    <h4 class="text-sm text-emerald-400 uppercase tracking-wider font-bold">Đang chiếu rạp tại Việt Nam</h4>
+                                </div>
+                                <p id="modalShowtimes" class="text-white text-sm leading-relaxed italic"></p>
+                            </div>
+                            
+                            <div class="pt-6 flex gap-4">
+                                <button onclick="setSearchFromModal()" class="flex-1 bg-brand hover:bg-brand-dark text-white py-3 rounded-lg font-bold flex justify-center items-center transition shadow-lg shadow-brand/20 text-sm md:text-base">
+                                    <i data-lucide="users" class="w-5 h-5 mr-2"></i> Tìm Bạn Xem Phim Này
+                                </button>
+                                <button id="modalFavBtn" onclick="window.handleBookmarkClick()" class="p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition border border-white/10">
+                                    <i data-lucide="bookmark" id="bookmarkIcon" class="w-5 h-5"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= MODAL 2: POST MOVIE BUDDY REQUEST (Đăng/Sửa tin xem phim) ================= -->
+    <div id="buddyPostModal" class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <!-- Backdrop -->
+        <div class="absolute inset-0 bg-black/85 backdrop-blur-md" id="buddyPostModalBackdrop" onclick="window.closeBuddyPostModal()"></div>
+        
+        <!-- Form Container -->
+        <div class="relative bg-brand-gray w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden border border-gray-700 p-6 md:p-8 z-10 max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center gap-3 mb-6 border-b border-gray-800/80 pb-4">
+                <button id="closeBuddyPostModalBtn" onclick="window.closeBuddyPostModal()" class="p-2 -ml-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-full transition flex items-center justify-center group" title="Quay lại">
+                    <i data-lucide="arrow-left" class="w-5 h-5 group-hover:-translate-x-1 transition-transform"></i>
+                </button>
+                <i data-lucide="users-round" class="text-brand w-6 h-6 hidden sm:block"></i>
+                <h2 class="text-xl font-bold">Đăng Tin Tìm Bạn Xem Phim</h2>
+            </div>
+            
+            <form id="buddyForm" onsubmit="submitBuddyRequest(event)" class="space-y-5">
+                
+                <!-- PHẦN 1: THÔNG TIN CÁ NHÂN -->
+                <div class="bg-black/30 p-4 rounded-xl border border-gray-800 space-y-4">
+                    <div class="flex items-center gap-1.5 border-b border-gray-800/80 pb-2">
+                        <i data-lucide="user" class="w-4 h-4 text-brand"></i>
+                        <span class="text-xs uppercase tracking-wider font-bold text-gray-300">1. Thông tin cá nhân của bạn</span>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Tên của bạn / Biệt danh <span class="text-brand">*</span></label>
+                        <input 
+                            type="text" 
+                            id="buddyNickname" 
+                            required
+                            maxlength="30"
+                            class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm transition"
+                            placeholder="VD: Minh Thư, Hoàng Long..."
+                        >
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Thông tin liên hệ (SĐT, Zalo, link FB...) <span class="text-brand">*</span></label>
+                        <input 
+                            type="text" 
+                            id="buddyContact" 
+                            required
+                            maxlength="100"
+                            class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm transition"
+                            placeholder="VD: Zalo: 090123xxx hoặc FB: link cá nhân"
+                        >
+                        <p class="text-[10px] text-gray-500 mt-1">Thông tin chỉ hiển thị khi có người nhấn nút kết nối xem chi tiết.</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Lời nhắn gửi thêm <span class="text-brand">*</span></label>
+                        <textarea 
+                            id="buddyMessage" 
+                            required
+                            maxlength="200"
+                            rows="2"
+                            class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm resize-none transition"
+                            placeholder="VD: Mình đã bao sẵn vé, hoặc chia đôi tiền nước, thích thảo luận phim..."
+                        ></textarea>
+                    </div>
+                </div>
+
+                <!-- PHẦN 2: THÔNG TIN PHIM MUỐN COI -->
+                <div class="bg-black/30 p-4 rounded-xl border border-gray-800 space-y-4">
+                    <div class="flex items-center gap-1.5 border-b border-gray-800/80 pb-2">
+                        <i data-lucide="clapperboard" class="w-4 h-4 text-emerald-500"></i>
+                        <span class="text-xs uppercase tracking-wider font-bold text-gray-300">2. Thông tin bộ phim muốn xem</span>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-semibold text-gray-400 mb-1">Tên bộ phim muốn xem <span class="text-brand">*</span></label>
+                        <input 
+                            type="text" 
+                            id="buddyMovie" 
+                            required
+                            maxlength="60"
+                            class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm transition"
+                            placeholder="VD: Deadpool & Wolverine, Khu Rừng Nhỏ..."
+                        >
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Thời gian muốn xem <span class="text-brand">*</span></label>
+                            <input 
+                                type="text" 
+                                id="buddyTime" 
+                                required
+                                maxlength="50"
+                                class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm transition"
+                                placeholder="VD: Tối Thứ 7 (20:00), Cuối tuần này..."
+                            >
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-400 mb-1">Rạp chiếu phim / Khu vực <span class="text-brand">*</span></label>
+                            <input 
+                                type="text" 
+                                id="buddyCinema" 
+                                required
+                                maxlength="50"
+                                class="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-gray-700 text-white focus:border-brand focus:outline-none text-sm transition"
+                                placeholder="VD: CGV Landmark 81, Hà Nội..."
+                            >
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button 
+                        type="submit" 
+                        class="w-full py-3 bg-brand hover:bg-brand-dark text-white font-bold rounded-lg transition shadow-lg shadow-brand/20 flex items-center justify-center gap-2"
+                    >
+                        <i data-lucide="send" class="w-4 h-4"></i> Phát Tín Hiệu Đăng Tin
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Firebase SDK & Web App Logic -->
+    <script type="module">
+        // Firebase standard import configurations
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getAuth, signInWithCustomToken, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, onSnapshot, doc, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+        // Global variables provided by environment or default configs
+        const apiKey = "";
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'ticket-plus-buddy';
+        let db = null;
+        let auth = null;
+        let user = null;
+        let isFirebaseReady = false;
+
+        // Base metadata pools for generating 100 high-quality unique mock accounts programmatically
+        const rawFirstNames = ["Nguyễn", "Trần", "Lê", "Phạm", "Hoàng", "Huỳnh", "Phan", "Vũ", "Võ", "Đặng", "Bùi", "Đỗ", "Hồ", "Ngô", "Dương", "Lý"];
+        const rawMiddleNames = ["Văn", "Thị", "Minh", "Đức", "Thanh", "Tuấn", "Hoàng", "Khánh", "Hải", "Quốc", "Anh", "Phương", "Ngọc", "Gia", "Như", "Hữu"];
+        const rawLastNames = ["Hùng", "Lan", "Dũng", "Mai", "Vy", "Đạt", "Sơn", "Hà", "Trang", "Long", "Nam", "Huy", "Tùng", "Chi", "Bách", "Nhi", "Linh", "Khang", "Thảo", "Hải"];
+
+        // DANH SÁCH PHIM ĐÃ ĐỒNG BỘ (ĐÃ CẬP NHẬT MỐC THỜI GIAN THÁNG 5/2026 - KHỚP VỚI TIÊU CHÍ VUI VẺ GIẢI TRÍ & CHỮA LÀNH)
+        const rawMovies = [
+            { name: "Deadpool & Wolverine", genre: "action" },
+            { name: "Kẻ Trộm Mặt Trăng 4", genre: "anime" },
+            { name: "Kung Fu Panda 4", genre: "anime" },
+            { name: "Câu Chuyện Đồ Chơi 5", genre: "anime" },
+            { name: "Inside Out 2", genre: "anime" },
+            { name: "The Super Mario Bros. Movie", genre: "anime" },
+            { name: "Free Guy", genre: "action" },
+            { name: "The Garfield Movie", genre: "anime" },
+            { name: "Vùng Đất Linh Hồn", genre: "anime" },
+            { name: "Khu Rừng Nhỏ", genre: "drama" },
+            { name: "Cuộc Sống Nhiệm Màu", genre: "anime" },
+            { name: "Muôn Kiếp Nhân Duyên", genre: "drama" },
+            { name: "Hàng Xóm Của Tôi Là Totoro", genre: "anime" },
+            { name: "Ponyo Bé Xinh", genre: "anime" },
+            { name: "The Secret Life of Walter Mitty", genre: "drama" },
+            { name: "Gia Đình Quái Vật (Monster Family)", genre: "anime" },
+            { name: "Interstellar (IMAX Re-run)", genre: "scifi" },
+            { name: "Dune: Part Two (Cát Bụi Kiến Tạo)", genre: "scifi" },
+            { name: "Spider-Man: Across the Spider-Verse", genre: "scifi" },
+            { name: "Exhuma: Quật Mộ Trùng Tang", genre: "horror" }
+        ];
+
+        const rawCinemas = [
+            "CGV Landmark 81, TP.HCM",
+            "CGV Vincom Đồng Khởi, Q.1",
+            "CGV Vincom Nguyễn Chí Thanh, Hà Nội",
+            "CGV Aeon Mall Long Biên, Hà Nội",
+            "Lotte Cinema Cantavil, Q.2",
+            "Lotte Cinema Landmark, Cầu Giấy",
+            "BHD Star Thảo Điền, Q.2",
+            "BHD Star Phàm Hùng, Bình Chánh",
+            "Galaxy Nguyễn Du, Q.1",
+            "Beta Cinemas Thanh Xuân, Hà Nội",
+            "Cinestar Quốc Thanh, Q.1",
+            "Cinestar Hai Bà Trưng, Q.1",
+            "CGV Vincom Metropolis, Ba Đình",
+            "Lotte Cinema Kosmo, Tây Hồ",
+            "Galaxy Tràng Thi, Hà Nội"
+        ];
+
+        const rawDates = [
+            "Tối Thứ Bảy này (20:00)",
+            "Chiều Chủ Nhật tuần này (15:30)",
+            "Tối nay luôn (19:30)",
+            "Cuối tuần này (bất kỳ buổi nào)",
+            "Tối Thứ Năm tuần này (20:30)",
+            "Chiều mai (16:00)",
+            "Trưa Thứ Bảy (12:00)",
+            "Tối Thứ Sáu (18:15)",
+            "Suất chiếu khuya cuối tuần (22:45)"
+        ];
+
+        const rawMessagesByGenre = {
+            scifi: [
+                "Mình mê khám phá đa vũ trụ và khoa học viễn tưởng. Muốn rủ bạn nào cùng đi coi bản đặc biệt này để đàm đạo sau phim!",
+                "Cần tìm đồng đội chung sở thích thuyết tương đối và du hành thời gian. Đi xem xong làm ly cafe đàm đạo vũ trụ nhé.",
+                "Đã mua sẵn vé phòng chiếu chất lượng cao cực xịn. Muốn tìm một tri kỷ điện ảnh đi cùng để cùng thưởng thức bữa tiệc hình ảnh này."
+            ],
+            anime: [
+                "Cần tìm một bạn yêu mến phong cách vẽ và âm nhạc tuyệt vời của tác phẩm này. Coi xong đi ăn tối chia sẻ cảm nhận nha.",
+                "Tìm đồng đạo Wibu chân chính đi xem bản rạp hoành trạp. Mình hứa sẽ bao trọn gói bắp nước cho bạn đi cùng nhiệt tình!",
+                "Một tác phẩm đầy cảm xúc hoài niệm. Rất muốn cùng ngồi thưởng thức với một tâm hồn đồng điệu yêu mến văn hóa hoạt hình Nhật Bản."
+            ],
+            drama: [
+                "Đây là tác phẩm nghệ thuật có chiều sâu tâm lý cực cao. Mình muốn tìm một người bạn lịch sự, sâu sắc để cùng chiêm nghiệm và bàn luận.",
+                "Đã yêu mến bộ phim này từ lâu nay mới có dịp thưởng thức ngoài rạp. Tìm người xem cùng để chia sẻ những khoảnh khắc lắng động.",
+                "Phong cách làm phim vô cùng tinh tế và nhiều tầng ý nghĩa. Hy vọng tìm được bạn đồng hành chung gu điện ảnh độc lập."
+            ],
+            vietnamese: [
+                "Ủng hộ phim điện ảnh nước nhà chất lượng cao! Mình đã bao sẵn vé VIP, chỉ cần bạn đi cùng trò chuyện vui vẻ sau giờ chiếu.",
+                "Phim Việt dạo này kịch bản lên tay lắm mọi người ơi. Đi xem chung với mình cuối tuần này để giao lưu kết bạn nha.",
+                "Tìm một người bạn đồng hành cùng đi xem bộ phim đang cực hot này. Tiền vé chia đôi, bắp nước mình lo tất tần tật."
+            ],
+            horror: [
+                "Cực kỳ đam mê phim kinh dị giật gân nhưng hơi nhát gan. Cần tìm đồng đội đi cùng để có chỗ bám víu lúc cao trào cứu nguy!",
+                "Suất chiếu đêm cực kỳ hồi hộp và kịch tính. Ai gan dạ mê tâm linh thì lập team đi chung cho thêm phần rùng rợn nha.",
+                "Thách thức nỗi sợ hãi cùng tác phẩm đình đám này. Cam kết không la hét làm phiền mọi người xung quanh, tìm bạn dũng cảm đi cùng."
+            ],
+            action: [
+                "Yêu thích phong cách đồ họa hoành tráng và những pha hành động đỉnh cao. Đã mua vé hàng ghế đẹp nhất phòng IMAX rồi nha!",
+                "Tìm cạ cứng cuồng kỹ xảo điện ảnh và nhịp độ nhanh đi xem chung. Coi xong tha hồ tranh luận cốt truyện và easter eggs.",
+                "Đam mê vũ trụ hành động này từ nhỏ. Muốn lập hội cùng đi xem suất chiếu đặc biệt để cùng hò hét phấn khích thỏa đam mê."
+            ]
+        };
+
+        const movieSpecificMessages = {
+            "Deadpool & Wolverine": [
+                "Deadpool & Wolverine siêu bựa siêu lầy lội luôn! Đã book vé đôi ở phòng IMAX 3D, cần tìm đồng đội cuồng Marvel đi coi cùng quẩy hết mình nha!",
+                "Ai đi xem Deadpool & Wolverine chung với mình tối nay không? Cười sảng khoái suốt 2 tiếng, bắp nước mình bao tất!"
+            ],
+            "Kẻ Trộm Mặt Trăng 4": [
+                "Binh đoàn Minions phần này quậy hết nấc! Rủ rê các bạn cùng đi xem giải trí cười thả ga cuối tuần.",
+                "Đã mua vé đôi Kẻ Trộm Mặt Trăng 4 suất chiều. Ai đi cùng mình chia đôi niềm vui và bắp nước nhé."
+            ],
+            "Kung Fu Panda 4": [
+                "Gấu Po mập ú tấu hài vô cùng duyên dáng. Đi xem chung suất tối rồi đi làm ly trà sữa tán gẫu nào.",
+                "Tìm cạ cứng xem gấu Po đại hiệp đấu ác nhân. Phim siêu vui nhộn thích hợp để xả stress."
+            ],
+            "Câu Chuyện Đồ Chơi 5": [
+                "Buzz và Woody đã trở lại trong phần 5 siêu vui và cảm động! Đi xem chung suất đặc biệt để cùng cười cùng khóc ôn lại tuổi thơ nào!"
+            ]
+        };
+
+        // Bảng ánh xạ mã thể loại chính thức từ TMDB sang Tiếng Việt
+        const tmdbGenreMap = {
+            28: "Hành động",
+            12: "Phiêu lưu",
+            16: "Hoạt hình",
+            35: "Hài hước",
+            80: "Hình sự",
+            99: "Tài liệu",
+            18: "Tâm lý",
+            10751: "Gia đình",
+            14: "Kỳ ảo",
+            36: "Lịch sử",
+            27: "Kinh dị",
+            10402: "Âm nhạc",
+            9648: "Bí ẩn",
+            10749: "Tình cảm",
+            878: "Viễn tưởng",
+            10770: "Phim truyền hình",
+            53: "Giật gân",
+            10752: "Chiến tranh",
+            37: "Miền tây",
+            // Thể loại dành riêng cho TV Series/Phim bộ
+            10759: "Hành động & Phiêu lưu",
+            10762: "Trẻ em",
+            10763: "Tin tức",
+            10764: "Truyền hình thực tế",
+            10765: "Viễn tưởng & Kỳ ảo",
+            10766: "Tâm lý dài tập",
+            10767: "Talk Show",
+            10768: "Chiến tranh & Chính trị"
+        };
+
+        // Complete 100 online users pool
+        let all100Buddies = [];
+        let displayedBuddies = [];
+        let currentBuddySubTab = 'all'; // Trạng thái sub-tab của Tìm bạn xem phim
+        let editingPostId = null; // Trạng thái id bài đăng đang được sửa đổi
+
+        // Dynamic 100 entries generation algorithm
+        function generate100MockBuddies() {
+            const list = [];
+            for (let i = 1; i <= 100; i++) {
+                const fName = rawFirstNames[Math.floor(Math.random() * rawFirstNames.length)];
+                const mName = rawMiddleNames[Math.floor(Math.random() * rawMiddleNames.length)];
+                const lName = rawLastNames[Math.floor(Math.random() * rawLastNames.length)];
+                const fullName = `${fName} ${mName} ${lName}`;
+
+                const movieObj = rawMovies[Math.floor(Math.random() * rawMovies.length)];
+                const cinema = rawCinemas[Math.floor(Math.random() * rawCinemas.length)];
+                const dateTime = rawDates[Math.floor(Math.random() * rawDates.length)];
+                
+                let message = "";
+                if (movieSpecificMessages[movieObj.name]) {
+                    const specificList = movieSpecificMessages[movieObj.name];
+                    message = specificList[Math.floor(Math.random() * specificList.length)];
+                } else {
+                    const msgs = rawMessagesByGenre[movieObj.genre] || rawMessagesByGenre["drama"];
+                    message = msgs[Math.floor(Math.random() * msgs.length)];
+                }
+
+                const contactMethods = [
+                    `Zalo: 09${Math.floor(10000000 + Math.random() * 90000000)}`,
+                    `Facebook: fb.com/${fullName.toLowerCase().replace(/\s+/g, '')}.${i}`,
+                    `Zalo / SĐT: 03${Math.floor(10000000 + Math.random() * 90000000)}`,
+                    `Telegram: @${fullName.toLowerCase().replace(/\s+/g, '')}_cinema`
+                ];
+                const contact = contactMethods[Math.floor(Math.random() * contactMethods.length)];
+
+                const hoursAgo = (i * 1.5) + (Math.random() * 2);
+                const createdAt = Date.now() - (hoursAgo * 3600 * 1000);
+
+                list.push({
+                    id: `online-user-${i}`,
+                    nickname: fullName,
+                    movieName: movieObj.name,
+                    cinema,
+                    dateTime,
+                    contact,
+                    message,
+                    createdAt
+                });
+            }
+            return list;
+        }
+
+        function shuffleArray(array) {
+            const arrCopy = [...array];
+            for (let i = arrCopy.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [arrCopy[i], arrCopy[j]] = [arrCopy[j], arrCopy[i]];
+            }
+            return arrCopy;
+        }
+
+        // State variables
+        let currentMovies = [];
+        let bookmarkedMovies = new Set(); // Stores ids/titles of favorite movies
+        let activeMovieInModal = null; // Trực tiếp lưu phim đang được xem để bookmark chính xác
+        let expandedCategory = null; // Trạng thái mở rộng danh mục: 'entertainment' | 'healing' | null
+
+        // Định nghĩa các hàm quản lý Bookmark toàn cục chống lỗi ReferenceError hoisting
+        window.updateBookmarkBtnUI = (movieId) => {
+            const elements = getElements();
+            if (!elements.modalFavBtn || !elements.bookmarkIcon) return;
+
+            if (bookmarkedMovies.has(movieId)) {
+                elements.modalFavBtn.className = "p-3 bg-red-600/20 hover:bg-red-600/30 text-brand rounded-lg transition border border-brand/50";
+                elements.bookmarkIcon.setAttribute('class', 'lucide lucide-bookmark w-5 h-5 text-brand fill-brand');
+            } else {
+                elements.modalFavBtn.className = "p-3 bg-white/10 hover:bg-white/20 text-white rounded-lg transition border border-white/10";
+                elements.bookmarkIcon.setAttribute('class', 'lucide lucide-bookmark w-5 h-5 text-white');
+            }
+        };
+
+        window.handleBookmarkClick = () => {
+            if (!activeMovieInModal) return;
+            const movieId = activeMovieInModal.id || activeMovieInModal.title;
+            
+            if (bookmarkedMovies.has(movieId)) {
+                bookmarkedMovies.delete(movieId);
+                showToast(`Đã xóa "${activeMovieInModal.title}" khỏi danh sách yêu thích!`, "info");
+            } else {
+                bookmarkedMovies.add(movieId);
+                showToast(`Đã lưu "${activeMovieInModal.title}" vào danh sách yêu thích!`, "success");
+            }
+            window.updateBookmarkBtnUI(movieId);
+        };
+
+        // Initialize Firebase securely
+        if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+            try {
+                const firebaseConfig = JSON.parse(__firebase_config);
+                const app = initializeApp(firebaseConfig);
+                auth = getAuth(app);
+                db = getFirestore(app);
+                isFirebaseReady = true;
+            } catch (e) {
+                console.error("Firebase startup error:", e);
+            }
+        }
+
+        // Initialize Authentication & Listening
+        const initAuthentication = async () => {
+            all100Buddies = generate100MockBuddies();
+            displayedBuddies = shuffleArray(all100Buddies).slice(0, 10);
+            window.updateMyPostsCountBadge(); // Đồng bộ số lượng tin đăng lên badge khi khởi động
+
+            if (!isFirebaseReady) {
+                renderBuddyRequests(displayedBuddies);
+                return;
+            }
+
+            try {
+                if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                    await signInWithCustomToken(auth, __initial_auth_token);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (e) {
+                console.error("Authentication setup failed:", e);
+                renderBuddyRequests(displayedBuddies);
+            }
+        };
+
+        // Listen for Auth changes & fetch data
+        if (auth) {
+            onAuthStateChanged(auth, (loggedUser) => {
+                user = loggedUser;
+                if (user) {
+                    subscribeToBuddyRequests();
+                }
+            });
+        }
+
+        // Cache elements dynamically to avoid top-level null-pointer exceptions
+        const getElements = () => ({
+            searchInput: document.getElementById('searchInput'),
+            searchBtn: document.getElementById('searchBtn'),
+            filterGenre: document.getElementById('filterGenre'),
+            filterCountry: document.getElementById('filterCountry'),
+            filterFormat: document.getElementById('filterFormat'),
+            movieFilterContainer: document.getElementById('movieFilterContainer'),
+            entertainmentMoviesSection: document.getElementById('entertainmentMoviesSection'),
+            entertainmentMoviesGrid: document.getElementById('entertainmentMoviesGrid'),
+            healingMoviesSection: document.getElementById('healingMoviesSection'),
+            healingMoviesGrid: document.getElementById('healingMoviesGrid'),
+            resultsGrid: document.getElementById('resultsGrid'),
+            loadingState: document.getElementById('loadingState'),
+            errorState: document.getElementById('errorState'),
+            emptyState: document.getElementById('emptyState'),
+            resultsHeader: document.getElementById('resultsHeader'),
+            resultsTitle: document.getElementById('resultsTitle'),
+            errorMsg: document.getElementById('errorMsg'),
+            movieModal: document.getElementById('movieModal'),
+            moviePoster: document.getElementById('modalPoster'),
+            movieTitle: document.getElementById('modalTitle'),
+            movieOriginalTitle: document.getElementById('modalOriginalTitle'),
+            movieYear: document.getElementById('modalYear'),
+            movieRatingText: document.getElementById('modalRatingText'),
+            modalImdb: document.getElementById('modalImdb'),
+            modalImdbText: document.getElementById('modalImdbText'),
+            modalRottenTomatoes: document.getElementById('modalRottenTomatoes'),
+            modalRottenTomatoesText: document.getElementById('modalRottenTomatoesText'),
+            moviePlot: document.getElementById('modalPlot'),
+            movieDirector: document.getElementById('modalDirector'),
+            movieActors: document.getElementById('modalActors'),
+            movieGenres: document.getElementById('movieGenres'),
+            modalPlatformsContainer: document.getElementById('modalPlatformsContainer'),
+            modalPlatforms: document.getElementById('modalPlatforms'),
+            modalShowtimesContainer: document.getElementById('modalShowtimesContainer'),
+            modalShowtimes: document.getElementById('modalShowtimes'),
+            modalFavBtn: document.getElementById('modalFavBtn'),
+            bookmarkIcon: document.getElementById('bookmarkIcon'),
+            buddyPostModal: document.getElementById('buddyPostModal'),
+            buddyRequestsGrid: document.getElementById('buddyRequestsGrid'),
+            emptyBuddyState: document.getElementById('emptyBuddyState'),
+            buddyMovieFilterInput: document.getElementById('buddyMovieFilterInput'),
+            buddyLocationFilterInput: document.getElementById('buddyLocationFilterInput'),
+            buddyTimeFilterInput: document.getElementById('buddyTimeFilterInput'),
+            buddyNameFilterInput: document.getElementById('buddyNameFilterInput'),
+            refreshIcon: document.getElementById('refreshIcon'),
+            toastNotification: document.getElementById('toastNotification'),
+            toastMessage: document.getElementById('toastMessage'),
+            
+            // AI Chat Elements
+            tabAiBtn: document.getElementById('tabAiBtn'),
+            tabAiContent: document.getElementById('tabAiContent'),
+            chatMessages: document.getElementById('chatMessages'),
+            chatInput: document.getElementById('chatInput'),
+            chatForm: document.getElementById('chatForm'),
+            chatTypingIndicator: document.getElementById('chatTypingIndicator'),
+
+            entBtnExpand: document.getElementById('entBtnExpand'),
+            healBtnExpand: document.getElementById('healBtnExpand'),
+            myPostsCountBadge: document.getElementById('myPostsCountBadge')
+        });
+
+        // ================= GLOBAL WINDOW BINDINGS =================
+        window.closeModal = () => {
+            const elements = getElements();
+            if (elements.movieModal) {
+                elements.movieModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+        };
+
+        window.closeBuddyPostModal = () => {
+            const elements = getElements();
+            if (elements.buddyPostModal) {
+                elements.buddyPostModal.classList.add('hidden');
+                document.body.style.overflow = 'auto';
+            }
+            editingPostId = null; // Trả lại null sau khi tắt bảng đăng tin
+        };
+
+        window.openEntertainmentModal = (movieIndex) => {
+            const movie = entertainmentMoviesData[movieIndex];
+            if (!movie) return;
+
+            activeMovieInModal = movie; 
+            const elements = getElements();
+
+            if (elements.moviePoster) elements.moviePoster.src = movie.posterUrl;
+            if (elements.movieTitle) elements.movieTitle.textContent = movie.title;
+            if (elements.movieOriginalTitle) elements.movieOriginalTitle.textContent = movie.originalTitle ? `(${movie.originalTitle})` : '';
+            if (elements.movieYear) elements.movieYear.textContent = movie.year;
+            if (elements.movieRatingText) elements.movieRatingText.textContent = movie.rating + '/10';
+            if (elements.moviePlot) elements.moviePlot.textContent = movie.plot;
+            if (elements.movieDirector) elements.movieDirector.textContent = movie.director;
+            if (elements.movieActors) elements.movieActors.textContent = movie.actors;
+            
+            if (elements.movieGenres) {
+                elements.movieGenres.innerHTML = movie.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+            }
+
+            if (elements.modalImdb && elements.modalImdbText) {
+                if (movie.imdbRating && movie.imdbRating.trim() !== '') {
+                    elements.modalImdbText.textContent = movie.imdbRating;
+                    elements.modalImdb.classList.remove('hidden');
+                } else {
+                    elements.modalImdb.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalRottenTomatoes && elements.modalRottenTomatoesText) {
+                if (movie.rottenTomatoesRating && movie.rottenTomatoesRating.trim() !== '') {
+                    elements.modalRottenTomatoesText.textContent = movie.rottenTomatoesRating;
+                    elements.modalRottenTomatoes.classList.remove('hidden');
+                } else {
+                    elements.modalRottenTomatoes.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalPlatformsContainer && elements.modalPlatforms) {
+                if (movie.platforms && movie.platforms.length > 0 && movie.platforms[0] !== '') {
+                    elements.modalPlatforms.innerHTML = movie.platforms.map(p => `<span class="bg-black/50 text-xs px-3 py-1.5 rounded-md border border-gray-600 text-white font-semibold">${p}</span>`).join('');
+                    elements.modalPlatformsContainer.classList.remove('hidden');
+                } else {
+                    elements.modalPlatformsContainer.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalShowtimesContainer && elements.modalShowtimes) {
+                if (movie.isShowingInVietnam) {
+                    elements.modalShowtimes.textContent = movie.vietnamShowtimes || "Đang có suất chiếu tại các cụm rạp toàn quốc (CGV, Lotte, Galaxy...).";
+                    elements.modalShowtimesContainer.classList.remove('hidden');
+                } else {
+                    elements.modalShowtimesContainer.classList.add('hidden');
+                }
+            }
+
+            window.updateBookmarkBtnUI(movie.id || movie.title);
+
+            if (elements.movieModal) {
+                elements.movieModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.openHealingModal = (movieIndex) => {
+            const movie = healingMoviesData[movieIndex];
+            if (!movie) return;
+
+            activeMovieInModal = movie; 
+            const elements = getElements();
+
+            if (elements.moviePoster) elements.moviePoster.src = movie.posterUrl;
+            if (elements.movieTitle) elements.movieTitle.textContent = movie.title;
+            if (elements.movieOriginalTitle) elements.movieOriginalTitle.textContent = movie.originalTitle ? `(${movie.originalTitle})` : '';
+            if (elements.movieYear) elements.movieYear.textContent = movie.year;
+            if (elements.movieRatingText) elements.movieRatingText.textContent = movie.rating + '/10';
+            if (elements.moviePlot) elements.moviePlot.textContent = movie.plot;
+            if (elements.movieDirector) elements.movieDirector.textContent = movie.director;
+            if (elements.movieActors) elements.movieActors.textContent = movie.actors;
+            
+            if (elements.movieGenres) {
+                elements.movieGenres.innerHTML = movie.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+            }
+
+            if (elements.modalImdb && elements.modalImdbText) {
+                if (movie.imdbRating && movie.imdbRating.trim() !== '') {
+                    elements.modalImdbText.textContent = movie.imdbRating;
+                    elements.modalImdb.classList.remove('hidden');
+                } else {
+                    elements.modalImdb.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalRottenTomatoes && elements.modalRottenTomatoesText) {
+                if (movie.rottenTomatoesRating && movie.rottenTomatoesRating.trim() !== '') {
+                    elements.modalRottenTomatoesText.textContent = movie.rottenTomatoesRating;
+                    elements.modalRottenTomatoes.classList.remove('hidden');
+                } else {
+                    elements.modalRottenTomatoes.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalPlatformsContainer && elements.modalPlatforms) {
+                if (movie.platforms && movie.platforms.length > 0 && movie.platforms[0] !== '') {
+                    elements.modalPlatforms.innerHTML = movie.platforms.map(p => `<span class="bg-black/50 text-xs px-3 py-1.5 rounded-md border border-gray-600 text-white font-semibold">${p}</span>`).join('');
+                    elements.modalPlatformsContainer.classList.remove('hidden');
+                } else {
+                    elements.modalPlatformsContainer.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalShowtimesContainer && elements.modalShowtimes) {
+                if (movie.isShowingInVietnam) {
+                    elements.modalShowtimes.textContent = movie.vietnamShowtimes || "Đang có suất chiếu tại các cụm rạp toàn quốc (CGV, Lotte, Galaxy...).";
+                    elements.modalShowtimesContainer.classList.remove('hidden');
+                } else {
+                    elements.modalShowtimesContainer.classList.add('hidden');
+                }
+            }
+
+            window.updateBookmarkBtnUI(movie.id || movie.title);
+
+            if (elements.movieModal) {
+                elements.movieModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.openModal = (movieIndex, posterUrl) => {
+            const movie = currentMovies[movieIndex];
+            if (!movie) return;
+
+            activeMovieInModal = movie; 
+            const elements = getElements();
+
+            if (elements.moviePoster) elements.moviePoster.src = posterUrl;
+            if (elements.movieTitle) elements.movieTitle.textContent = movie.title;
+            if (elements.movieOriginalTitle) elements.movieOriginalTitle.textContent = movie.originalTitle ? `(${movie.originalTitle})` : '';
+            if (elements.movieYear) elements.movieYear.textContent = movie.year;
+            if (elements.movieRatingText) elements.movieRatingText.textContent = movie.rating + '/10';
+            if (elements.moviePlot) elements.moviePlot.textContent = movie.plot;
+            if (elements.movieDirector) elements.movieDirector.textContent = movie.director;
+            if (elements.movieActors) elements.movieActors.textContent = movie.actors;
+            
+            if (elements.movieGenres) {
+                elements.movieGenres.innerHTML = movie.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+            }
+
+            if (elements.modalImdb && elements.modalImdbText) {
+                if (movie.imdbRating && movie.imdbRating.trim() !== '') {
+                    elements.modalImdbText.textContent = movie.imdbRating;
+                    elements.modalImdb.classList.remove('hidden');
+                } else {
+                    elements.modalImdb.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalRottenTomatoes && elements.modalRottenTomatoesText) {
+                if (movie.rottenTomatoesRating && movie.rottenTomatoesRating.trim() !== '') {
+                    elements.modalRottenTomatoesText.textContent = movie.rottenTomatoesRating;
+                    elements.modalRottenTomatoes.classList.remove('hidden');
+                } else {
+                    elements.modalRottenTomatoes.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalPlatformsContainer && elements.modalPlatforms) {
+                if (movie.platforms && movie.platforms.length > 0 && movie.platforms[0] !== '') {
+                    elements.modalPlatforms.innerHTML = movie.platforms.map(p => `<span class="bg-black/50 text-xs px-3 py-1.5 rounded-md border border-gray-600 text-white font-semibold">${p}</span>`).join('');
+                    elements.modalPlatformsContainer.classList.remove('hidden');
+                } else {
+                    elements.modalPlatformsContainer.classList.add('hidden');
+                }
+            }
+
+            if (elements.modalShowtimesContainer && elements.modalShowtimes) {
+                if (movie.isShowingInVietnam) {
+                    elements.modalShowtimes.textContent = movie.vietnamShowtimes || "Đang có suất chiếu tại các cụm rạp toàn quốc (CGV, Lotte, Galaxy...).";
+                    elements.modalShowtimesContainer.classList.remove('hidden');
+                } else {
+                    elements.modalShowtimesContainer.classList.add('hidden');
+                }
+            }
+
+            window.updateBookmarkBtnUI(movie.id || movie.title);
+
+            if (elements.movieModal) {
+                elements.movieModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+        };
+
+        window.switchTab = (tabName) => {
+            const tabMoviesBtn = document.getElementById('tabMoviesBtn');
+            const tabAiBtn = document.getElementById('tabAiBtn');
+            const tabBuddyBtn = document.getElementById('tabBuddyBtn');
+            const tabMoviesContent = document.getElementById('tabMoviesContent');
+            const tabAiContent = document.getElementById('tabAiContent');
+            const tabBuddyContent = document.getElementById('tabBuddyContent');
+            
+            const heroTitle = document.getElementById('heroTitle');
+            const heroSubtext = document.getElementById('heroSubtext');
+            const movieSearchContainer = document.getElementById('movieSearchContainer');
+            const movieFilterContainer = document.getElementById('movieFilterContainer');
+            const movieSuggestions = document.getElementById('movieSuggestions');
+            const buddyControls = document.getElementById('buddyControls');
+            const entertainmentMoviesSection = document.getElementById('entertainmentMoviesSection');
+            const healingMoviesSection = document.getElementById('healingMoviesSection');
+
+            // Reset tab styles
+            if (tabMoviesBtn) tabMoviesBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 relative";
+            if (tabAiBtn) tabAiBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 relative";
+            if (tabBuddyBtn) tabBuddyBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-gray-300 hover:text-white hover:bg-white/5 transition flex items-center gap-1.5 relative";
+            
+            // Hide all contents
+            if (tabMoviesContent) { tabMoviesContent.classList.add('hidden'); tabMoviesContent.classList.remove('block'); }
+            if (tabAiContent) { tabAiContent.classList.add('hidden'); tabAiContent.classList.remove('flex'); }
+            if (tabBuddyContent) { tabBuddyContent.classList.add('hidden'); tabBuddyContent.classList.remove('block'); }
+
+            if (tabName === 'movies') {
+                if (tabMoviesBtn) tabMoviesBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand transition flex items-center gap-1.5 shadow-md shadow-brand/20";
+                if (tabMoviesContent) { tabMoviesContent.classList.remove('hidden'); tabMoviesContent.classList.add('block'); }
+
+                if (heroTitle) heroTitle.innerHTML = 'Phim hay <span class="text-brand">trong tầm tay</span>';
+                if (heroSubtext) heroSubtext.textContent = 'Hãy để thế giới điện ảnh xoa dịu tâm hồn bạn';
+                if (movieSearchContainer) movieSearchContainer.classList.remove('hidden');
+                if (movieFilterContainer) movieFilterContainer.classList.remove('hidden');
+                if (movieSuggestions) movieSuggestions.classList.remove('hidden');
+                if (buddyControls) { buddyControls.classList.add('hidden'); buddyControls.classList.remove('flex'); }
+                
+                // Hiển thị lại danh sách phim giải trí nếu ô tìm kiếm/bộ lọc đang trống
+                updateFeaturedSectionsVisibility();
+                
+            } else if (tabName === 'ai') {
+                if (tabAiBtn) tabAiBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand transition flex items-center gap-1.5 shadow-md shadow-brand/20";
+                if (tabAiContent) { tabAiContent.classList.remove('hidden'); tabAiContent.classList.add('flex'); }
+
+                if (heroTitle) heroTitle.innerHTML = 'Trợ lý <span class="text-brand">gợi ý phim</span>';
+                if (heroSubtext) heroSubtext.textContent = 'Trò chuyện với AI để nhận những gợi ý phim cá nhân hóa dựa trên sở thích, tâm trạng và thói quen xem phim của riêng bạn.';
+                if (movieSearchContainer) movieSearchContainer.classList.add('hidden');
+                if (movieFilterContainer) movieFilterContainer.classList.add('hidden');
+                if (movieSuggestions) movieSuggestions.classList.add('hidden');
+                if (buddyControls) { buddyControls.classList.add('hidden'); buddyControls.classList.remove('flex'); }
+                if (entertainmentMoviesSection) entertainmentMoviesSection.classList.add('hidden');
+                if (healingMoviesSection) healingMoviesSection.classList.add('hidden');
+                
+            } else {
+                if (tabBuddyBtn) tabBuddyBtn.className = "px-4 py-2 rounded-full text-sm font-semibold text-white bg-brand transition flex items-center gap-1.5 shadow-md shadow-brand/20";
+                if (tabBuddyContent) { tabBuddyContent.classList.remove('hidden'); tabBuddyContent.classList.add('block'); }
+
+                if (heroTitle) heroTitle.innerHTML = 'Kết nối <span class="text-brand">bạn xem phim</span>';
+                if (heroSubtext) heroSubtext.textContent = 'Bạn không muốn xem phim một mình? Tìm kiếm người xem theo bộ phim yêu thích hoặc phát tín hiệu rủ bạn mới cực kỳ nhanh chóng.';
+                if (movieSearchContainer) movieSearchContainer.classList.add('hidden');
+                if (movieFilterContainer) movieFilterContainer.classList.add('hidden');
+                if (movieSuggestions) movieSuggestions.classList.add('hidden');
+                if (buddyControls) { buddyControls.classList.remove('hidden'); buddyControls.classList.add('flex'); }
+                if (entertainmentMoviesSection) entertainmentMoviesSection.classList.add('hidden');
+                if (healingMoviesSection) healingMoviesSection.classList.add('hidden');
+            }
+        };
+
+        window.setSearch = (query) => {
+            const elements = getElements();
+            if (elements.searchInput) elements.searchInput.value = query;
+            if (elements.filterGenre) elements.filterGenre.value = "";
+            if (elements.filterCountry) elements.filterCountry.value = "";
+            if (elements.filterFormat) elements.filterFormat.value = "";
+            handleSearch();
+        };
+
+        window.setSearchFromModal = () => {
+            const elements = getElements();
+            if (!activeMovieInModal) return;
+            const movieNameToFind = activeMovieInModal.title;
+            window.closeModal();
+            window.switchTab('buddy');
+            if (elements.buddyMovieFilterInput) elements.buddyMovieFilterInput.value = movieNameToFind;
+            if (elements.buddyLocationFilterInput) elements.buddyLocationFilterInput.value = '';
+            filterBuddyRequests();
+        };
+
+        const elements = getElements();
+        if (elements.searchBtn) elements.searchBtn.addEventListener('click', handleSearch);
+        if (elements.searchInput) {
+            elements.searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') handleSearch();
+            });
+        }
+        
+        if (elements.buddyMovieFilterInput) elements.buddyMovieFilterInput.addEventListener('input', filterBuddyRequests);
+        if (elements.buddyLocationFilterInput) elements.buddyLocationFilterInput.addEventListener('input', filterBuddyRequests);
+        if (elements.buddyTimeFilterInput) elements.buddyTimeFilterInput.addEventListener('input', filterBuddyRequests);
+        if (elements.buddyNameFilterInput) elements.buddyNameFilterInput.addEventListener('input', filterBuddyRequests);
+
+        // Core AI Movie Search handler
+        async function handleSearch() {
+            const elements = getElements();
+            const query = elements.searchInput ? elements.searchInput.value.trim() : "";
+            const genre = elements.filterGenre ? elements.filterGenre.value : "";
+            const country = elements.filterCountry ? elements.filterCountry.value : "";
+            const format = elements.filterFormat ? elements.filterFormat.value : "";
+
+            if (!query && !genre && !country && !format) {
+                updateFeaturedSectionsVisibility();
+                if (elements.emptyState) elements.emptyState.classList.add('hidden');
+                if (elements.resultsHeader) elements.resultsHeader.classList.add('hidden');
+                if (elements.resultsGrid) elements.resultsGrid.innerHTML = '';
+                return;
+            }
+
+            // Ẩn các List phim khi bắt đầu tìm kiếm
+            if (elements.entertainmentMoviesSection) elements.entertainmentMoviesSection.classList.add('hidden');
+            if (elements.healingMoviesSection) elements.healingMoviesSection.classList.add('hidden');
+
+            if (elements.emptyState) elements.emptyState.classList.add('hidden');
+            if (elements.errorState) elements.errorState.classList.add('hidden');
+            if (elements.resultsGrid) elements.resultsGrid.innerHTML = '';
+            if (elements.resultsHeader) elements.resultsHeader.classList.add('hidden');
+            if (elements.loadingState) {
+                elements.loadingState.classList.remove('hidden');
+                elements.loadingState.classList.add('flex');
+            }
+
+            let titleText = "Kết quả khám phá";
+            if (query) titleText = `Kết quả tìm kiếm cho "${query}"`;
+            else if (genre || country || format) titleText = `Kết quả lọc phim`;
+
+            if (elements.resultsTitle) elements.resultsTitle.textContent = titleText;
+
+            try {
+                const movies = await fetchMoviesViaAI(query, genre, country, format);
+                if (elements.loadingState) {
+                    elements.loadingState.classList.add('hidden');
+                    elements.loadingState.classList.remove('flex');
+                }
+                
+                if (movies && movies.length > 0) {
+                    currentMovies = movies;
+                    renderMovies(movies);
+                    if (elements.resultsHeader) elements.resultsHeader.classList.remove('hidden');
+                } else {
+                    showError("Không tìm thấy kết quả phù hợp. Hãy thử tìm kiếm cụm từ khác.");
+                }
+            } catch (error) {
+                console.error("AI fetch failed:", error);
+                if (elements.loadingState) {
+                    elements.loadingState.classList.add('hidden');
+                    elements.loadingState.classList.remove('flex');
+                }
+                showError("Lỗi hệ thống khi kết nối đến cơ sở dữ liệu. Vui lòng thử lại sau.");
+            }
+        }
+
+        // Cập nhật trạng thái ẩn hiện dựa theo bộ lọc/tìm kiếm và chế độ mở rộng Xem tất cả
+        function updateFeaturedSectionsVisibility() {
+            const elements = getElements();
+            const query = elements.searchInput ? elements.searchInput.value.trim() : "";
+            const genre = elements.filterGenre ? elements.filterGenre.value : "";
+            const country = elements.filterCountry ? elements.filterCountry.value : "";
+            const format = elements.filterFormat ? elements.filterFormat.value : "";
+
+            const hasActiveFilter = (query || genre || country || format);
+
+            if (hasActiveFilter) {
+                if (elements.entertainmentMoviesSection) elements.entertainmentMoviesSection.classList.add('hidden');
+                if (elements.healingMoviesSection) elements.healingMoviesSection.classList.add('hidden');
+            } else {
+                if (expandedCategory === 'entertainment') {
+                    if (elements.entertainmentMoviesSection) elements.entertainmentMoviesSection.classList.remove('hidden');
+                    if (elements.healingMoviesSection) elements.healingMoviesSection.classList.add('hidden');
+                } else if (expandedCategory === 'healing') {
+                    if (elements.entertainmentMoviesSection) elements.entertainmentMoviesSection.classList.add('hidden');
+                    if (elements.healingMoviesSection) elements.healingMoviesSection.classList.remove('hidden');
+                } else {
+                    if (elements.entertainmentMoviesSection) elements.entertainmentMoviesSection.classList.remove('hidden');
+                    if (elements.healingMoviesSection) elements.healingMoviesSection.classList.remove('hidden');
+                }
+            }
+        }
+
+        function showError(message) {
+            const elements = getElements();
+            if (elements.errorMsg) elements.errorMsg.textContent = message;
+            if (elements.errorState) {
+                elements.errorState.classList.remove('hidden');
+                elements.errorState.classList.add('flex');
+            }
+        }
+
+        // Exponential retry fetch helper
+        async function fetchWithRetry(url, options, maxRetries = 5) {
+            const delays = [1000, 2000, 4000, 8000, 16000];
+            for (let i = 0; i < maxRetries; i++) {
+                try {
+                    const response = await fetch(url, options);
+                    if (!response.ok) throw new Error(`HTTP ${response.status}`);
+                    return await response.json();
+                } catch (error) {
+                    if (i === maxRetries - 1) throw error;
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        // Request generation payload to Gemini 2.5 Flash Preview
+        async function fetchMoviesViaAI(query, genre, country, format) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const systemPrompt = `Bạn là hệ thống dữ liệu thông tin phim của Ticket+. Thời điểm hiện tại là tháng 5 năm 2026.
+            Nhiệm vụ quan trọng nhất của bạn:
+            1. CHỈ TRẢ VỀ những kết quả phim thực sự KHỚP và có tên giống nhất, trực tiếp liên quan đến từ khóa và CÁC BỘ LỌC ĐƯỢC YÊU CẦU.
+            2. Bắt buộc phải cung cấp Tên gốc tiếng Anh (originalTitle) và Năm phát hành (year) thật chuẩn xác.
+            3. THỂ LOẠI (genres): Yêu cầu ghi chính xác thể loại của phim. BẮT BUỘC sử dụng các từ khóa chuẩn: Hành động, Phiêu lưu, Hoạt hình, Hài hước, Hình sự, Tài liệu, Tâm lý, Gia đình, Kỳ ảo, Lịch sử, Kinh dị, Âm nhạc, Bí ẩn, Tình cảm, Viễn tưởng, Phim truyền hình, Giật gân, Chiến tranh.
+            4. Phải sử dụng công cụ tìm kiếm mạng để lấy CHÍNH XÁC điểm số IMDb và Rotten Tomatoes đã được công bố.
+            5. Tổng hợp các nền tảng phát sóng trực tuyến và xác định lịch chiếu rạp tại Việt Nam.
+            
+            Trả về danh sách dữ liệu khớp hoàn hảo bằng cấu trúc JSON quy định bằng tiếng Việt.`;
+            
+            let filterString = "";
+            if (genre) filterString += `- Thể loại: ${genre}. `;
+            if (country) filterString += `- Quốc gia: ${country}. `;
+            if (format) filterString += `- Định dạng: ${format}. `;
+
+            const queryPrompt = query ? `từ khóa: "${query}"` : `phổ biến nhất hiện tại`;
+            const userPrompt = `Tìm kiếm tối đa 8 bộ phim / phim bộ liên quan mật thiết và sát nhất với ${queryPrompt}. \nCác tiêu chí lọc bắt buộc phải thỏa mãn:\n${filterString}\n\nCung cấp thông tin chuẩn xác nhất, đặc biệt là điểm số IMDb, Rotten Tomatoes và Thể loại chính xác.`;
+
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: { parts: [{ text: systemPrompt }] },
+                generationConfig: {
+                    responseMimeType: "application/json",
+                    responseSchema: {
+                        type: "ARRAY",
+                        description: "Danh sách phim tìm kiếm được trùng khớp nhất",
+                        items: {
+                            type: "OBJECT",
+                            properties: {
+                                id: { type: "STRING" },
+                                title: { type: "STRING", description: "Tên phim bằng tiếng Việt" },
+                                originalTitle: { type: "STRING", description: "Tên phim gốc tiếng Anh chính xác tuyệt đối" },
+                                year: { type: "STRING", description: "Năm phát hành (VD: 2014)" },
+                                genres: { type: "ARRAY", items: { type: "STRING" }, description: "Danh sách thể loại phim. Phải cực kỳ chính xác và bám sát các thể loại chuẩn mực của điện ảnh." },
+                                director: { type: "STRING" },
+                                actors: { type: "STRING" },
+                                plot: { type: "STRING", description: "Tóm tắt phim ngắn gọn, thu hút" },
+                                rating: { type: "NUMBER", description: "Đánh giá 1-10" },
+                                imdbRating: { type: "STRING", description: "Điểm IMDb (VD: 8.8) - để trống nếu không có" },
+                                rottenTomatoesRating: { type: "STRING", description: "Điểm Rotten Tomatoes (VD: 86%) - để trống nếu không có" },
+                                platforms: { type: "ARRAY", items: { type: "STRING" }, description: "Các nền tảng trực tuyến đang chiếu (VD: Netflix, HBO Max, Apple TV) - Rỗng nếu chiếu rạp" },
+                                isShowingInVietnam: { type: "BOOLEAN", description: "Phim có đang được chiếu tại các rạp phim ở Việt Nam hiện tại không?" },
+                                vietnamShowtimes: { type: "STRING", description: "Thông tin rạp đang chiếu tại Việt Nam (VD: Đang chiếu tại CGV, Lotte, Galaxy) - để trống nếu không chiếu" }
+                            },
+                            required: ["id", "title", "originalTitle", "year", "genres", "director", "actors", "plot", "rating", "imdbRating", "rottenTomatoesRating", "platforms", "isShowingInVietnam", "vietnamShowtimes"]
+                        }
+                    }
+                }
+            };
+
+            const data = await fetchWithRetry(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!textResponse) throw new Error("API returned blank data");
+            
+            let cleanJsonStr = textResponse.trim();
+            if (cleanJsonStr.startsWith('```json')) {
+                cleanJsonStr = cleanJsonStr.replace(/^```json\n?/, '').replace(/\n?```$/, '');
+            } else if (cleanJsonStr.startsWith('```')) {
+                cleanJsonStr = cleanJsonStr.replace(/^```\n?/, '').replace(/\n?```$/, '');
+            }
+            
+            let parsedMovies = JSON.parse(cleanJsonStr);
+            parsedMovies.forEach((m, idx) => m.id = "ai-movie-" + Date.now() + "-" + idx);
+            return parsedMovies;
+        }
+
+        // Hàm fetch dữ liệu bổ sung chất lượng cao từ TMDB API
+        async function fetchAdditionalData(originalTitle, localTitle, year) {
+            const searchTerms = [originalTitle, localTitle].filter(Boolean);
+            const tmdbApiKey = "15d2ea6d0dc1d476efbca3eba2b9bbfb"; 
+            
+            const cleanYear = year ? year.toString().match(/\d{4}/)?.[0] : null;
+
+            let finalData = { posterUrl: null, tmdbRating: null, genres: null };
+
+            const checkTmdb = async (url) => {
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    if (data.results && data.results.length > 0) {
+                        const resultItem = data.results.find(item => item.poster_path) || data.results[0];
+                        
+                        const genreIds = resultItem.genre_ids || [];
+                        const mappedGenres = genreIds.map(id => tmdbGenreMap[id]).filter(Boolean);
+
+                        return {
+                            posterUrl: resultItem.poster_path ? `https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2${resultItem.poster_path}` : null,
+                            tmdbRating: (resultItem.vote_average && resultItem.vote_average > 0) ? resultItem.vote_average.toFixed(1) : null,
+                            genres: mappedGenres.length > 0 ? mappedGenres : null
+                        };
+                    }
+                } catch(e) {}
+                return null;
+            };
+
+            let tmdbFound = false;
+            for (let term of searchTerms) {
+                const encodedTerm = encodeURIComponent(term);
+                let urlsToTry = [];
+                
+                if (cleanYear) {
+                    urlsToTry.push(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodedTerm}&language=vi&primary_release_year=${cleanYear}`);
+                    urlsToTry.push(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodedTerm}&language=vi&first_air_date_year=${cleanYear}`);
+                }
+                
+                urlsToTry.push(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodedTerm}&language=vi`);
+                urlsToTry.push(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodedTerm}&language=vi`);
+                urlsToTry.push(`https://api.themoviedb.org/3/search/movie?api_key=${tmdbApiKey}&query=${encodedTerm}`);
+                urlsToTry.push(`https://api.themoviedb.org/3/search/tv?api_key=${tmdbApiKey}&query=${encodedTerm}`);
+
+                for (let url of urlsToTry) {
+                    const result = await checkTmdb(url);
+                    if (result) {
+                        if (result.posterUrl) finalData.posterUrl = result.posterUrl;
+                        if (result.tmdbRating) finalData.tmdbRating = result.tmdbRating;
+                        if (result.genres) finalData.genres = result.genres;
+                        tmdbFound = true;
+                        break;
+                    }
+                }
+                if (tmdbFound && finalData.posterUrl) break; 
+            }
+
+            if (!finalData.posterUrl) {
+                for (let term of searchTerms) {
+                    try {
+                        const response = await fetch(`https://itunes.apple.com/search?term=${encodeURIComponent(term)}&entity=movie&limit=1`);
+                        const data = await response.json();
+                        if (data.results && data.results.length > 0) {
+                            finalData.posterUrl = data.results[0].artworkUrl100.replace('100x100bb.jpg', '600x900bb.jpg').replace('100x100.jpg', '600x900.jpg');
+                            break;
+                        }
+                    } catch (e) {
+                        console.error("iTunes error:", e);
+                    }
+                }
+            }
+            return finalData;
+        }
+
+        // Cấu hình cứng danh sách 8 phim GIẢI TRÍ VUI VẺ năm 2024-2026 siêu lầy lội, hài hước
+        const entertainmentMoviesData = [
+            {
+                id: "ent-1",
+                title: "Deadpool & Wolverine",
+                originalTitle: "Deadpool & Wolverine",
+                year: "2024",
+                rating: 8.0,
+                genres: ["Hành động", "Hài hước", "Viễn tưởng"],
+                director: "Shawn Levy",
+                actors: "Ryan Reynolds, Hugh Jackman, Emma Corrin",
+                plot: "Gã bựa nhân lầy lội Deadpool phá vỡ giới hạn không gian thời gian của TVA để chiêu mộ chiến binh huyền thoại Wolverine nhằm cứu lấy vũ trụ của mình. Một bữa tiệc tiếng cười rôm rả đầy bạo lực và hài hước.",
+                imdbRating: "8.0",
+                rottenTomatoesRating: "78%",
+                platforms: ["Disney+"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/8cdWv6Z7HOnN6At7cEv6ug76I0K.jpg"
+            },
+            {
+                id: "ent-2",
+                title: "Kẻ Trộm Mặt Trăng 4",
+                originalTitle: "Despicable Me 4",
+                year: "2024",
+                rating: 7.2,
+                genres: ["Hoạt hình", "Gia đình", "Hài hước"],
+                director: "Chris Renaud",
+                actors: "Steve Carell, Kristen Wiig, Will Ferrell",
+                plot: "Đại gia đình ác nhân lương thiện Gru đón chào thêm thành viên mới Gru Jr., đồng thời họ phải trốn chạy khỏi kẻ thù không đội trời chung. Sự góp mặt của binh đoàn siêu năng lực Mega Minions mang tới hàng tấn trò quậy cười ra nước mắt.",
+                imdbRating: "7.2",
+                rottenTomatoesRating: "80%",
+                platforms: ["Netflix", "Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/w9MRDc68Z9b9676vY0Z9gY9Z9gY.jpg"
+            },
+            {
+                id: "ent-3",
+                title: "Kung Fu Panda 4",
+                originalTitle: "Kung Fu Panda 4",
+                year: "2024",
+                rating: 7.0,
+                genres: ["Hoạt hình", "Hành động", "Hài hước"],
+                director: "Mike Mitchell",
+                actors: "Jack Black, Awkwafina, Viola Davis",
+                plot: "Gấu trúc Po chuẩn bị rời chiếc ghế Thần Long Đại Hiệp để thăng tiến làm thủ lĩnh tinh thần của Thung lũng Bình Yên. Nhưng trước tiên, Po cùng nàng cáo trộm vặt Zhen phải đối đầu tắc kè hoa phản diện biến hình đầy lém lỉnh.",
+                imdbRating: "7.0",
+                rottenTomatoesRating: "71%",
+                platforms: ["Netflix", "Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/kDp1vUBgSTuW8v69vR686g36J41.jpg"
+            },
+            {
+                id: "ent-4",
+                title: "Câu Chuyện Đồ Chơi 5",
+                originalTitle: "Toy Story 5",
+                year: "2026",
+                rating: 8.5,
+                genres: ["Hoạt hình", "Gia đình", "Hài hước"],
+                director: "Andrew Stanton",
+                actors: "Tom Hanks, Tim Allen",
+                plot: "Cuộc phiêu lưu mới siêu tinh nghịch của Woody, Buzz Lightyear và những người bạn đồ chơi quen thuộc khi họ phải đối đầu với một làn sóng thiết bị công nghệ hiện đại - thứ đang mê hoặc mọi đứa trẻ thời nay.",
+                imdbRating: "8.4",
+                rottenTomatoesRating: "91%",
+                platforms: ["Chiếu rạp"],
+                isShowingInVietnam: true,
+                vietnamShowtimes: "Đang chiếu tại toàn bộ hệ thống rạp Việt Nam dịp hè năm 2026.",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/7rIPjn5TUK04O25ZkMyHrGNPgLx.jpg"
+            },
+            {
+                id: "ent-5",
+                title: "Những Mảnh Ghép Cảm Xúc 2",
+                originalTitle: "Inside Out 2",
+                year: "2024",
+                rating: 8.1,
+                genres: ["Hoạt hình", "Gia đình", "Hài hước"],
+                director: "Kelsey Mann",
+                actors: "Amy Poehler, Maya Hawke, Kensington Tallman",
+                plot: "Lăng kính nội tâm của cô bé Riley dậy thì đón nhận thêm các vị khách cảm xúc hoàn toàn mới: Lo Âu, Ghen Tị, Sĩ Diện và Chán Nản khiến ban điều hành của Vui Vẻ gặp rắc rối cực lớn.",
+                imdbRating: "8.1",
+                rottenTomatoesRating: "91%",
+                platforms: ["Disney+"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/vpnVM9B6NMmQpWeZvzABHWzLLEl.jpg"
+            },
+            {
+                id: "ent-6",
+                title: "Anh Chàng Tự Do",
+                originalTitle: "Free Guy",
+                year: "2021",
+                rating: 7.6,
+                genres: ["Hài hước", "Hành động", "Viễn tưởng"],
+                director: "Shawn Levy",
+                actors: "Ryan Reynolds, Jodie Comer, Taika Waititi",
+                plot: "Một nhân viên giao dịch ngân hàng phát hiện ra mình thực chất chỉ là một nhân vật phụ (NPC) trong một trò chơi điện tử thế giới mở tàn bạo, và anh quyết định đứng lên viết lại số phận chính mình.",
+                imdbRating: "7.6",
+                rottenTomatoesRating: "80%",
+                platforms: ["Disney+", "Netflix"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/x20w8g7lhSg40gZ864ev8Q68XU7.jpg"
+            },
+            {
+                id: "ent-7",
+                title: "Phim Anh Em Super Mario",
+                originalTitle: "The Super Mario Bros. Movie",
+                year: "2023",
+                rating: 7.8,
+                genres: ["Hoạt hình", "Phiêu lưu", "Hài hước"],
+                director: "Aaron Horvath",
+                actors: "Chris Pratt, Anya Taylor-Joy, Jack Black",
+                plot: "Hành trình thám hiểm Vương quốc Nấm của anh em thợ sửa ống nước Mario và Luigi nhằm giải cứu thế giới khỏi sự xâm lăng độc ác của quái vật rùa Bowser.",
+                imdbRating: "7.8",
+                rottenTomatoesRating: "95%",
+                platforms: ["Netflix", "Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/qNBAX6Xo4O6v67rYgBAR6HGvfZ5.jpg"
+            },
+            {
+                id: "ent-8",
+                title: "Garfield: Mèo Béo Siêu Quậy",
+                originalTitle: "The Garfield Movie",
+                year: "2024",
+                rating: 6.9,
+                genres: ["Hoạt hình", "Hài hước", "Gia đình"],
+                director: "Mark Dindal",
+                actors: "Chris Pratt, Samuel L. Jackson",
+                plot: "Sau một cuộc tái ngộ bất ngờ với người cha thất lạc lâu năm - chú mèo hoang nhếch nhác Vic, Garfield và người bạn chó Odie buộc phải từ bỏ cuộc sống nuông chiều hoàn hảo để tham gia vào một vụ trộm vui nhộn.",
+                imdbRating: "6.9",
+                rottenTomatoesRating: "82%",
+                platforms: ["Chiếu rạp"],
+                isShowingInVietnam: true,
+                vietnamShowtimes: "Đang chiếu tại các cụm rạp CGV, Lotte toàn quốc.",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/pS0gO7gE6aAepFOnxOofzT7p4v4.jpg"
+            }
+        ];
+
+        // Cấu hình cứng danh sách 8 phim CHỮA LÀNH ấm áp, xoa dịu tâm hồn
+        const healingMoviesData = [
+            {
+                id: "heal-1",
+                title: "Vùng Đất Linh Hồn",
+                originalTitle: "Spirited Away",
+                year: "2001",
+                rating: 8.6,
+                genres: ["Hoạt hình", "Phiêu lưu", "Kỳ ảo"],
+                director: "Hayao Miyazaki",
+                actors: "Rumi Hiiragi, Miyu Irino",
+                plot: "Cô bé Chihiro bị lạc vào thế giới linh hồn kỳ bí. Để cứu cha mẹ bị biến thành heo, cô phải làm việc cho phù thủy Yubaba và tìm cách trở về thế giới thực. Một bộ phim tuyệt đẹp về sự dũng cảm và trưởng thành.",
+                imdbRating: "8.6",
+                rottenTomatoesRating: "97%",
+                platforms: ["Netflix"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/39wmItIWsg5sZMyRUHLkBgkABko.jpg"
+            },
+            {
+                id: "heal-2",
+                title: "Khu Rừng Nhỏ",
+                originalTitle: "Little Forest",
+                year: "2018",
+                rating: 7.8,
+                genres: ["Tâm lý", "Đời thường"],
+                director: "Yim Soon-rye",
+                actors: "Kim Tae-ri, Ryu Jun-yeol",
+                plot: "Mệt mỏi với cuộc sống thành thị xô bồ, Hye-won trở về quê nhà ở vùng nông thôn. Tại đây, cô tự tay trồng trọt, nấu những món ăn mộc mạc và dần chữa lành những vết thương lòng.",
+                imdbRating: "7.1",
+                rottenTomatoesRating: "86%",
+                platforms: ["Netflix", "Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/2yVpA4L1a73L9b7G2e5E2M2w7g7.jpg"
+            },
+            {
+                id: "heal-3",
+                title: "Cuộc Sống Nhiệm Màu",
+                originalTitle: "Soul",
+                year: "2020",
+                rating: 8.0,
+                genres: ["Hoạt hình", "Gia đình", "Kỳ ảo"],
+                director: "Pete Docter",
+                actors: "Jamie Foxx, Tina Fey",
+                plot: "Một giáo viên âm nhạc gặp tai nạn và linh hồn bị tách khỏi thể xác. Ở thế giới linh hồn, anh giúp một linh hồn trẻ tìm ý nghĩa cuộc sống và nhận ra giá trị thực sự của từng khoảnh khắc tồn tại.",
+                imdbRating: "8.0",
+                rottenTomatoesRating: "95%",
+                platforms: ["Disney+"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/hm58Jw4Lw8OIeECIq54tLIQ0S6Z.jpg"
+            },
+            {
+                id: "heal-4",
+                title: "Muôn Kiếp Nhân Duyên",
+                originalTitle: "Past Lives",
+                year: "2023",
+                rating: 7.9,
+                genres: ["Tình cảm", "Tâm lý"],
+                director: "Celine Song",
+                actors: "Greta Lee, Teo Yoo, John Magaro",
+                plot: "Hai người bạn thanh mai trúc mã ở Hàn Quốc bị chia cắt khi gia dịch cô gái di cư. 24 năm sau, họ tái ngộ tại New York trong một tuần định mệnh để đối mặt với tình yêu và số phận.",
+                imdbRating: "7.9",
+                rottenTomatoesRating: "95%",
+                platforms: ["Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/8htw3o09j4dK6hE2qD2G6Y3k8J7.jpg"
+            },
+            {
+                id: "heal-5",
+                title: "Hàng Xóm Của Tôi Là Totoro",
+                originalTitle: "My Neighbor Totoro",
+                year: "1988",
+                rating: 8.2,
+                genres: ["Hoạt hình", "Gia đình", "Kỳ ảo"],
+                director: "Hayao Miyazaki",
+                actors: "Noriko Hidaka, Chika Sakamoto",
+                plot: "Hai chị em Satsuki và Mei dọn về một vùng nông thôn thanh bình sống cùng cha để tiện chăm sóc người mẹ ốm. Tại đây họ phát hiện ra thế giới kỳ diệu của các vị thần rừng, dẫn đầu bởi thần Totoro bụng béo tốt bụng.",
+                imdbRating: "8.2",
+                rottenTomatoesRating: "93%",
+                platforms: ["Netflix"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/rtCx0ZVMY6v6n6vK8R9gX88CkoG.jpg"
+            },
+            {
+                id: "heal-6",
+                title: "Cô Bé Người Cá Ponyo",
+                originalTitle: "Ponyo",
+                year: "2008",
+                rating: 7.7,
+                genres: ["Hoạt hình", "Gia đình", "Kỳ ảo"],
+                director: "Hayao Miyazaki",
+                actors: "Yuria Nara, Hiroki Doi",
+                plot: "Một cô nàng cá vàng nổi loạn quyết định trốn chạy khỏi lâu đài dưới biển sâu của người cha phù thủy. Cô kết bạn với cậu bé loài người Sosuke và khao khát được hóa thân thành một con người đích thực.",
+                imdbRating: "7.7",
+                rottenTomatoesRating: "91%",
+                platforms: ["Netflix"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/9mUCD0D1KsmU71rU77028hIkooD.jpg"
+            },
+            {
+                id: "heal-7",
+                title: "Bí Mật Của Walter Mitty",
+                originalTitle: "The Secret Life of Walter Mitty",
+                year: "2013",
+                rating: 7.3,
+                genres: ["Phiêu lưu", "Tâm lý", "Hài hước"],
+                director: "Ben Stiller",
+                actors: "Ben Stiller, Kristen Wiig, Sean Penn",
+                plot: "Walter Mitty - một biên tập viên ảnh rụt rè của tạp chí Life có sở thích mơ mộng giữa ban ngày. Để tìm lại tấm phim âm bản bị thất lạc, anh bắt đầu một chuyến hành trình điên rồ xuyên qua những vùng hoang dã vĩ đại nhất địa cầu.",
+                imdbRating: "7.3",
+                rottenTomatoesRating: "72%",
+                platforms: ["Netflix", "Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/bW76VREt4xTf6CWh7b9S9gY9X6G.jpg"
+            },
+            {
+                id: "heal-8",
+                title: "Gia Đình Quái Vật",
+                originalTitle: "Monster Family",
+                year: "2017",
+                rating: 6.5,
+                genres: ["Hoạt hình", "Hài hước", "Gia đình"],
+                director: "Holger Tappe",
+                actors: "Emily Watson, Nick Frost, Jason Isaacs",
+                plot: "Gia đình Wishbone bất hòa và không hề hạnh phúc. Trong nỗ lực kết nối lại mọi người, người mẹ Emma tổ chức một buổi tối hóa trang vui vẻ, nhưng cả gia đình bất ngờ bị nguyền rủa biến thành quái vật thật sự.",
+                imdbRating: "6.5",
+                rottenTomatoesRating: "68%",
+                platforms: ["Apple TV"],
+                isShowingInVietnam: false,
+                vietnamShowtimes: "",
+                posterUrl: "https://wsrv.nl/?url=image.tmdb.org/t/p/w600_and_h900_bestv2/pD6o9G9VMyHhI99VfBvOf866vMv.jpg"
+            }
+        ];
+
+        // LOGIC MỞ RỘNG DANH MỤC TRỰC QUAN
+        window.toggleExpandCategory = (category) => {
+            const elements = getElements();
+            if (expandedCategory === category) {
+                expandedCategory = null;
+            } else {
+                expandedCategory = category;
+            }
+
+            updateCategoryLayouts();
+            renderEntertainmentMovies();
+            renderHealingMovies();
+            updateFeaturedSectionsVisibility();
+        };
+
+        function updateCategoryLayouts() {
+            const elements = getElements();
+            if (!elements.entertainmentMoviesGrid || !elements.healingMoviesGrid) return;
+
+            // Xử lý khối Giải trí vui vẻ
+            if (expandedCategory === 'entertainment') {
+                elements.entertainmentMoviesGrid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-5 w-full";
+                if (elements.entBtnExpand) {
+                    elements.entBtnExpand.innerHTML = `<i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i> Thu gọn`;
+                    elements.entBtnExpand.className = "text-xs bg-brand/20 hover:bg-brand/35 text-brand px-3 py-1 rounded-full transition ml-2 flex items-center";
+                }
+            } else {
+                elements.entertainmentMoviesGrid.className = "flex gap-4 lg:gap-5 overflow-x-auto pb-4 snap-x scroll-smooth no-scrollbar w-full";
+                if (elements.entBtnExpand) {
+                    elements.entBtnExpand.innerHTML = `Xem tất cả <i data-lucide="chevron-right" class="w-3.5 h-3.5 ml-1"></i>`;
+                    elements.entBtnExpand.className = "text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-2.5 py-1 rounded-full transition ml-2 flex items-center";
+                }
+            }
+
+            // Xử lý khối Chữa lành
+            if (expandedCategory === 'healing') {
+                elements.healingMoviesGrid.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 lg:gap-5 w-full";
+                if (elements.healBtnExpand) {
+                    elements.healBtnExpand.innerHTML = `<i data-lucide="chevron-left" class="w-3.5 h-3.5 mr-1"></i> Thu gọn`;
+                    elements.healBtnExpand.className = "text-xs bg-emerald-500/20 hover:bg-emerald-500/35 text-emerald-400 px-3 py-1 rounded-full transition ml-2 flex items-center";
+                }
+            } else {
+                elements.healingMoviesGrid.className = "flex gap-4 lg:gap-5 overflow-x-auto pb-4 snap-x scroll-smooth no-scrollbar w-full";
+                if (elements.healBtnExpand) {
+                    elements.healBtnExpand.innerHTML = `Xem tất cả <i data-lucide="chevron-right" class="w-3.5 h-3.5 ml-1"></i>`;
+                    elements.healBtnExpand.className = "text-xs bg-white/10 hover:bg-white/20 text-gray-300 px-2.5 py-1 rounded-full transition ml-2 flex items-center";
+                }
+            }
+            lucide.createIcons();
+        }
+
+        // Hàm dựng List Phim giải trí vui vẻ lên màn hình
+        function renderEntertainmentMovies() {
+            const elements = getElements();
+            if (!elements.entertainmentMoviesGrid) return;
+            
+            elements.entertainmentMoviesGrid.innerHTML = '';
+            
+            // Nếu ở chế độ thu gọn: chỉ hiển thị 4 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
+            const moviesToRender = expandedCategory === 'entertainment' ? entertainmentMoviesData : entertainmentMoviesData.slice(0, 4);
+
+            moviesToRender.forEach((movie, index) => {
+                const fallbackTitle = encodeURIComponent(movie.title.split(' ').slice(0, 3).join(' '));
+                const posterColor = index % 3 === 0 ? 'E50914' : (index % 2 === 0 ? '2F2F2F' : '1A1A1A');
+                const placeholderUrl = `https://placehold.co/600x900/${posterColor}/FFFFFF/png?text=${fallbackTitle}&font=Inter`;
+                const initialPoster = movie.posterUrl || placeholderUrl;
+                const genreTags = movie.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+
+                // Thay đổi độ rộng thẻ tùy vào chế độ nằm ngang hay lưới cột
+                const cardWidthClass = expandedCategory === 'entertainment' ? 'w-full' : 'w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] flex-none';
+
+                const cardHtml = `
+                    <div id="ent-movie-card-${index}" class="movie-card bg-brand-gray rounded-xl overflow-hidden cursor-pointer flex flex-col h-full border border-gray-800/80 group shadow-lg snap-start ${cardWidthClass}" onclick="window.openEntertainmentModal(${index})">
+                        <div class="relative aspect-[2/3] overflow-hidden bg-black">
+                            <img id="ent-poster-img-${index}" src="${initialPoster}" alt="${movie.title}" onerror="if(this.src !== '${placeholderUrl}') this.src='${placeholderUrl}';" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100" loading="lazy">
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300" id="ent-poster-loading-${index}">
+                                <i data-lucide="loader-2" class="w-8 h-8 text-brand animate-spin"></i>
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold border border-white/10 text-brand flex items-center shadow-lg z-10">
+                                <i data-lucide="star" class="w-3 h-3 mr-1 fill-brand text-brand"></i> <span id="ent-card-rating-${index}">${movie.rating}</span>
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-full p-3 sm:p-4 bg-gradient-to-t from-black via-black/80 to-transparent z-10">
+                                <h3 class="text-sm md:text-base font-bold text-white leading-tight mb-1 line-clamp-2 drop-shadow-md">${movie.title}</h3>
+                                <p class="text-[10px] sm:text-xs text-gray-300 drop-shadow-md">${movie.year}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                            <p class="text-gray-400 text-[10px] sm:text-xs line-clamp-2 mb-3 leading-relaxed">${movie.plot}</p>
+                            <div id="ent-genre-tags-${index}" class="flex flex-wrap gap-1 mt-auto">
+                                ${genreTags}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                elements.entertainmentMoviesGrid.insertAdjacentHTML('beforeend', cardHtml);
+
+                fetchAdditionalData(movie.originalTitle, movie.title, movie.year).then(realData => {
+                    const loadingOverlay = document.getElementById(`ent-poster-loading-${index}`);
+                    const img = document.getElementById(`ent-poster-img-${index}`);
+                    const ratingSpan = document.getElementById(`ent-card-rating-${index}`);
+                    const genreTagsContainer = document.getElementById(`ent-genre-tags-${index}`);
+                    
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('opacity-0');
+                        setTimeout(() => loadingOverlay.remove(), 300);
+                    }
+
+                    if (realData.posterUrl) {
+                        if (img) img.src = realData.posterUrl;
+                        entertainmentMoviesData[index].posterUrl = realData.posterUrl;
+                    }
+
+                    if (realData.genres) {
+                        entertainmentMoviesData[index].genres = realData.genres;
+                        if (genreTagsContainer) {
+                            genreTagsContainer.innerHTML = realData.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+                        }
+                        if (activeMovieInModal && activeMovieInModal.id === movie.id) {
+                            const modalGenres = document.getElementById('modalGenres');
+                            if (modalGenres) modalGenres.innerHTML = realData.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+                        }
+                    }
+                    
+                    if (realData.tmdbRating && realData.tmdbRating !== "0.0") {
+                        if (ratingSpan) ratingSpan.textContent = realData.tmdbRating;
+                        entertainmentMoviesData[index].rating = parseFloat(realData.tmdbRating);
+                        if (!entertainmentMoviesData[index].imdbRating || entertainmentMoviesData[index].imdbRating.trim() === '') {
+                            entertainmentMoviesData[index].imdbRating = realData.tmdbRating;
+                        }
+                    }
+                });
+            });
+            lucide.createIcons();
+        }
+
+        // Hàm dựng List Phim chữa lành lên màn hình
+        function renderHealingMovies() {
+            const elements = getElements();
+            if (!elements.healingMoviesGrid) return;
+            
+            elements.healingMoviesGrid.innerHTML = '';
+            
+            // Nếu ở chế độ thu gọn: chỉ hiển thị 4 phim đầu, nếu mở rộng thì hiển thị toàn bộ 8 phim
+            const moviesToRender = expandedCategory === 'healing' ? healingMoviesData : healingMoviesData.slice(0, 4);
+
+            moviesToRender.forEach((movie, index) => {
+                const fallbackTitle = encodeURIComponent(movie.title.split(' ').slice(0, 3).join(' '));
+                const posterColor = index % 3 === 0 ? '10B981' : (index % 2 === 0 ? '059669' : '047857');
+                const placeholderUrl = `https://placehold.co/600x900/${posterColor}/FFFFFF/png?text=${fallbackTitle}&font=Inter`;
+                const initialPoster = movie.posterUrl || placeholderUrl;
+                const genreTags = movie.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+
+                // Thay đổi độ rộng thẻ tùy vào chế độ nằm ngang hay lưới cột
+                const cardWidthClass = expandedCategory === 'healing' ? 'w-full' : 'w-[140px] sm:w-[160px] md:w-[180px] lg:w-[200px] flex-none';
+
+                const cardHtml = `
+                    <div id="heal-movie-card-${index}" class="movie-card bg-brand-gray rounded-xl overflow-hidden cursor-pointer flex flex-col h-full border border-gray-800/80 group shadow-lg hover:border-emerald-500/50 hover:shadow-emerald-500/10 snap-start ${cardWidthClass}" onclick="window.openHealingModal(${index})">
+                        <div class="relative aspect-[2/3] overflow-hidden bg-black">
+                            <img id="heal-poster-img-${index}" src="${initialPoster}" alt="${movie.title}" onerror="if(this.src !== '${placeholderUrl}') this.src='${placeholderUrl}';" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100" loading="lazy">
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300" id="heal-poster-loading-${index}">
+                                <i data-lucide="loader-2" class="w-8 h-8 text-brand animate-spin"></i>
+                            </div>
+                            <div class="absolute top-2 right-2 bg-black/80 backdrop-blur-md px-2 py-1 rounded-md text-[10px] sm:text-xs font-bold border border-white/10 text-emerald-400 flex items-center shadow-lg z-10">
+                                <i data-lucide="star" class="w-3 h-3 mr-1 fill-emerald-500 text-emerald-500"></i> <span id="heal-card-rating-${index}">${movie.rating}</span>
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-full p-3 sm:p-4 bg-gradient-to-t from-black via-black/80 to-transparent z-10">
+                                <h3 class="text-sm md:text-base font-bold text-white leading-tight mb-1 line-clamp-2 drop-shadow-md">${movie.title}</h3>
+                                <p class="text-[10px] sm:text-xs text-gray-300 drop-shadow-md">${movie.year}</p>
+                            </div>
+                        </div>
+                        <div class="p-3 sm:p-4 flex-1 flex flex-col justify-between">
+                            <p class="text-gray-400 text-[10px] sm:text-xs line-clamp-2 mb-3 leading-relaxed">${movie.plot}</p>
+                            <div id="heal-genre-tags-${index}" class="flex flex-wrap gap-1 mt-auto">
+                                ${genreTags}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                elements.healingMoviesGrid.insertAdjacentHTML('beforeend', cardHtml);
+
+                fetchAdditionalData(movie.originalTitle, movie.title, movie.year).then(realData => {
+                    const loadingOverlay = document.getElementById(`heal-poster-loading-${index}`);
+                    const img = document.getElementById(`heal-poster-img-${index}`);
+                    const ratingSpan = document.getElementById(`heal-card-rating-${index}`);
+                    const genreTagsContainer = document.getElementById(`heal-genre-tags-${index}`);
+                    
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('opacity-0');
+                        setTimeout(() => loadingOverlay.remove(), 300);
+                    }
+
+                    if (realData.posterUrl) {
+                        if (img) img.src = realData.posterUrl;
+                        healingMoviesData[index].posterUrl = realData.posterUrl;
+                    }
+
+                    if (realData.genres) {
+                        healingMoviesData[index].genres = realData.genres;
+                        if (genreTagsContainer) {
+                            genreTagsContainer.innerHTML = realData.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[10px] sm:text-[11px] px-1.5 py-0.5 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+                        }
+                        if (activeMovieInModal && activeMovieInModal.id === movie.id) {
+                            const modalGenres = document.getElementById('modalGenres');
+                            if (modalGenres) modalGenres.innerHTML = realData.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+                        }
+                    }
+                    
+                    if (realData.tmdbRating && realData.tmdbRating !== "0.0") {
+                        if (ratingSpan) ratingSpan.textContent = realData.tmdbRating;
+                        healingMoviesData[index].rating = parseFloat(realData.tmdbRating);
+                        if (!healingMoviesData[index].imdbRating || healingMoviesData[index].imdbRating.trim() === '') {
+                            healingMoviesData[index].imdbRating = realData.tmdbRating;
+                        }
+                    }
+                });
+            });
+            lucide.createIcons();
+        }
+
+        // Render movie list kết quả tìm kiếm
+        function renderMovies(movies) {
+            const elements = getElements();
+            if (!elements.resultsGrid) return;
+
+            elements.resultsGrid.innerHTML = '';
+            movies.forEach((movie, index) => {
+                const fallbackTitle = encodeURIComponent(movie.title.split(' ').slice(0, 3).join(' '));
+                const posterColor = index % 3 === 0 ? 'E50914' : (index % 2 === 0 ? '2F2F2F' : '1A1A1A');
+                const placeholderUrl = `https://placehold.co/600x900/${posterColor}/FFFFFF/png?text=${fallbackTitle}&font=Inter`;
+                const initialPoster = movie.posterUrl && movie.posterUrl.trim() !== "" ? movie.posterUrl : placeholderUrl;
+                const genreTags = movie.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[11px] px-2 py-1 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+
+                const cardHtml = `
+                    <div id="movie-card-${index}" class="movie-card bg-brand-gray rounded-xl overflow-hidden cursor-pointer flex flex-col h-full border border-gray-800/80 group" onclick="window.openModal(${index}, '${initialPoster}')">
+                        <div class="relative aspect-[2/3] overflow-hidden bg-black">
+                            <img id="poster-img-${index}" src="${initialPoster}" alt="${movie.title}" class="w-full h-full object-cover group-hover:scale-105 transition duration-500 opacity-90 group-hover:opacity-100" onerror="if(this.src !== '${placeholderUrl}') this.src='${placeholderUrl}';" loading="lazy">
+                            <div class="absolute inset-0 flex items-center justify-center bg-black/40 backdrop-blur-sm transition-opacity duration-300" id="poster-loading-${index}">
+                                <i data-lucide="loader-2" class="w-8 h-8 text-brand animate-spin"></i>
+                            </div>
+                            <div id="card-rating-container-${index}" class="absolute top-2.5 right-2.5 bg-black/80 backdrop-blur-md px-2.5 py-1 rounded-md text-xs font-bold border border-white/10 text-brand flex items-center shadow-lg z-10">
+                                <i data-lucide="star" class="w-3.5 h-3.5 mr-1 fill-brand text-brand"></i> <span id="card-rating-${index}">${movie.rating}</span>
+                            </div>
+                            <div class="absolute bottom-0 left-0 w-full p-4 bg-gradient-to-t from-black via-black/80 to-transparent z-10">
+                                <h3 class="text-base md:text-lg font-bold text-white leading-tight mb-1 line-clamp-2 drop-shadow-md">${movie.title}</h3>
+                                <p class="text-xs text-gray-300 drop-shadow-md">${movie.year}</p>
+                            </div>
+                        </div>
+                        <div class="p-4 flex-1 flex flex-col justify-between">
+                            <p class="text-gray-400 text-xs md:text-sm line-clamp-3 mb-4 leading-relaxed">${movie.plot}</p>
+                            <div id="genre-tags-${index}" class="flex flex-wrap gap-1.5 mt-auto">
+                                ${genreTags}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                elements.resultsGrid.insertAdjacentHTML('beforeend', cardHtml);
+
+                // Tải dữ liệu bổ sung thực tế (Poster thật + Điểm TMDB + Thể loại chuẩn)
+                fetchAdditionalData(movie.originalTitle, movie.title, movie.year).then(realData => {
+                    const loadingOverlay = document.getElementById(`poster-loading-${index}`);
+                    const img = document.getElementById(`poster-img-${index}`);
+                    const card = document.getElementById(`movie-card-${index}`);
+                    const ratingSpan = document.getElementById(`card-rating-${index}`);
+                    const genreTagsContainer = document.getElementById(`genre-tags-${index}`);
+                    
+                    if (loadingOverlay) {
+                        loadingOverlay.classList.add('opacity-0');
+                        setTimeout(() => loadingOverlay.remove(), 300);
+                    }
+
+                    if (realData.posterUrl) {
+                        if (img) img.src = realData.posterUrl;
+                        if (card) {
+                            card.setAttribute('onclick', `window.openModal(${index}, '${realData.posterUrl}')`);
+                        }
+                    }
+
+                    // Đồng bộ thể loại chuẩn 100% từ TMDB (Cả Thẻ phim và Modal nếu đang mở)
+                    if (realData.genres) {
+                        currentMovies[index].genres = realData.genres;
+                        if (genreTagsContainer) {
+                            genreTagsContainer.innerHTML = realData.genres.slice(0, 2).map(g => `<span class="bg-gray-800 text-[11px] px-2 py-1 rounded border border-gray-700 text-gray-300 font-medium">${g}</span>`).join('');
+                        }
+                        
+                        if (activeMovieInModal && activeMovieInModal.id === movie.id) {
+                            const modalGenres = document.getElementById('modalGenres');
+                            if (modalGenres) modalGenres.innerHTML = realData.genres.map(g => `<span class="bg-gray-800 text-xs px-2.5 py-1 rounded-full border border-gray-700 text-gray-200">${g}</span>`).join('');
+                        }
+                    }
+                    
+                    // Cập nhật điểm số chính xác từ TMDB nếu có
+                    if (realData.tmdbRating && realData.tmdbRating !== "0.0") {
+                        if (ratingSpan) ratingSpan.textContent = realData.tmdbRating;
+                        currentMovies[index].rating = parseFloat(realData.tmdbRating);
+                        // Nếu AI không tìm được điểm IMDb, lấy điểm TMDB làm mặc định thay thế rất đáng tin cậy
+                        if (!currentMovies[index].imdbRating || currentMovies[index].imdbRating.trim() === '') {
+                            currentMovies[index].imdbRating = realData.tmdbRating;
+                        }
+                    }
+                });
+            });
+            lucide.createIcons();
+        }
+
+        // ================= MOVIE BUDDY REALTIME SYSTEM =================
+        
+        // Open Create post modal
+        window.openBuddyPostModal = () => {
+            editingPostId = null;
+            const elements = getElements();
+            
+            // Reset form fields
+            const form = document.getElementById('buddyForm');
+            if (form) form.reset();
+            
+            // Set modal titles to default (Create mode)
+            const modalTitle = document.querySelector('#buddyPostModal h2');
+            if (modalTitle) modalTitle.textContent = "Đăng Tin Tìm Bạn Xem Phim";
+            
+            const submitBtn = document.querySelector('#buddyForm button[type="submit"]');
+            if (submitBtn) submitBtn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i> Phát Tín Hiệu Đăng Tin`;
+            
+            if (elements.buddyPostModal) {
+                elements.buddyPostModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            lucide.createIcons();
+        };
+
+        // Open Edit post modal
+        window.openEditBuddyModal = (id) => {
+            editingPostId = id;
+            const elements = getElements();
+            
+            // Find the post
+            const post = all100Buddies.find(b => b.id === id);
+            if (!post) return;
+            
+            // Fill form
+            document.getElementById('buddyNickname').value = post.nickname || '';
+            document.getElementById('buddyContact').value = post.contact || '';
+            document.getElementById('buddyMessage').value = post.message || '';
+            document.getElementById('buddyMovie').value = post.movieName || '';
+            document.getElementById('buddyTime').value = post.dateTime || '';
+            document.getElementById('buddyCinema').value = post.cinema || '';
+            
+            // Set modal titles to edit mode
+            const modalTitle = document.querySelector('#buddyPostModal h2');
+            if (modalTitle) modalTitle.textContent = "Chỉnh Sửa Tin Đăng";
+            
+            const submitBtn = document.querySelector('#buddyForm button[type="submit"]');
+            if (submitBtn) submitBtn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Lưu Thay Đổi`;
+            
+            if (elements.buddyPostModal) {
+                elements.buddyPostModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            lucide.createIcons();
+        };
+
+        // Helper to count and update user post badge
+        window.updateMyPostsCountBadge = () => {
+            const myPostIds = JSON.parse(localStorage.getItem('my_ticket_plus_posts') || '[]');
+            const badge = document.getElementById('myPostsCountBadge');
+            if (badge) {
+                if (myPostIds.length > 0) {
+                    badge.textContent = myPostIds.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+            }
+        };
+
+        // Helper to add post ID to user's list
+        function addMyPostId(id) {
+            let myPostIds = JSON.parse(localStorage.getItem('my_ticket_plus_posts') || '[]');
+            if (!myPostIds.includes(id)) {
+                myPostIds.push(id);
+                localStorage.setItem('my_ticket_plus_posts', JSON.stringify(myPostIds));
+            }
+            window.updateMyPostsCountBadge();
+        }
+
+        // Delete buddy request
+        window.deleteBuddyPost = async (id) => {
+            if (isFirebaseReady && auth.currentUser) {
+                try {
+                    const postDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'buddy_requests', id);
+                    await deleteDoc(postDocRef);
+                    showToast("Đã xóa tin đăng thành công!", "success");
+                } catch (error) {
+                    console.error("Firestore delete error:", error);
+                    showToast("Lỗi xóa tin đăng. Vui lòng thử lại.", "error");
+                }
+            } else {
+                all100Buddies = all100Buddies.filter(b => b.id !== id);
+                displayedBuddies = displayedBuddies.filter(b => b.id !== id);
+                showToast("Đã xóa tin đăng thành công!", "success");
+                filterBuddyRequests();
+            }
+
+            // Remove from local storage
+            let myPostIds = JSON.parse(localStorage.getItem('my_ticket_plus_posts') || '[]');
+            myPostIds = myPostIds.filter(item => item !== id);
+            localStorage.setItem('my_ticket_plus_posts', JSON.stringify(myPostIds));
+            window.updateMyPostsCountBadge();
+        };
+
+        // Post request to database
+        window.submitBuddyRequest = async (event) => {
+            event.preventDefault();
+            
+            const nickname = document.getElementById('buddyNickname').value.trim();
+            const movieName = document.getElementById('buddyMovie').value.trim();
+            const dateTime = document.getElementById('buddyTime').value.trim();
+            const cinema = document.getElementById('buddyCinema').value.trim();
+            const contact = document.getElementById('buddyContact').value.trim();
+            const message = document.getElementById('buddyMessage').value.trim();
+
+            const isEdit = (editingPostId !== null);
+
+            if (isEdit) {
+                // SỬA ĐỔI BÀI ĐĂNG (EDIT MODE)
+                const updatedPost = {
+                    nickname,
+                    movieName,
+                    dateTime,
+                    cinema,
+                    contact,
+                    message,
+                    updatedAt: Date.now()
+                };
+
+                if (isFirebaseReady && auth.currentUser) {
+                    try {
+                        const postDocRef = doc(db, 'artifacts', appId, 'public', 'data', 'buddy_requests', editingPostId);
+                        await updateDoc(postDocRef, updatedPost);
+                        showToast("Đã cập nhật tin đăng thành công!", "success");
+                    } catch (error) {
+                        console.error("Firestore update error:", error);
+                        showToast("Lỗi cập nhật. Vui lòng thử lại sau.", "error");
+                    }
+                } else {
+                    const index = all100Buddies.findIndex(b => b.id === editingPostId);
+                    if (index !== -1) {
+                        all100Buddies[index] = { ...all100Buddies[index], ...updatedPost };
+                    }
+                    showToast("Đã cập nhật tin đăng thành công!", "success");
+                    filterBuddyRequests();
+                }
+            } else {
+                // TẠO MỚI BÀI ĐĂNG (CREATE MODE)
+                const newPost = {
+                    id: 'local-' + Date.now(),
+                    nickname,
+                    movieName,
+                    dateTime,
+                    cinema,
+                    contact,
+                    message,
+                    createdAt: Date.now()
+                };
+
+                if (isFirebaseReady && auth.currentUser) {
+                    try {
+                        const buddyCollection = collection(db, 'artifacts', appId, 'public', 'data', 'buddy_requests');
+                        const docRef = await addDoc(buddyCollection, newPost);
+                        addMyPostId(docRef.id);
+                        showToast("Đã đăng tin tìm bạn thành công!", "success");
+                    } catch (error) {
+                        console.error("Firestore post error:", error);
+                        showToast("Lỗi đăng tin. Vui lòng thử lại sau.", "error");
+                    }
+                } else {
+                    all100Buddies.unshift(newPost);
+                    addMyPostId(newPost.id);
+                    displayedBuddies = [newPost, ...shuffleArray(all100Buddies.filter(b => b.id !== newPost.id)).slice(0, 9)];
+                    showToast("Đã đăng tin tìm bạn thành công!", "success");
+                    filterBuddyRequests();
+                }
+            }
+
+            document.getElementById('buddyForm').reset();
+            window.closeBuddyPostModal();
+        };
+
+        // Realtime Subscription (onSnapshot)
+        const subscribeToBuddyRequests = () => {
+            if (!isFirebaseReady || !auth.currentUser) return;
+
+            const buddyCollection = collection(db, 'artifacts', appId, 'public', 'data', 'buddy_requests');
+            
+            onSnapshot(buddyCollection, (snapshot) => {
+                const requests = [];
+                snapshot.forEach((doc) => {
+                    requests.push({ id: doc.id, ...doc.data() });
+                });
+
+                requests.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+                
+                if (requests.length > 0) {
+                    const customIds = new Set(requests.map(r => r.id));
+                    all100Buddies = [...requests, ...all100Buddies.filter(b => !customIds.has(b.id))];
+                }
+                
+                filterBuddyRequests();
+            }, (error) => {
+                console.error("Subscription fail. Loading mock backup data:", error);
+                filterBuddyRequests();
+            });
+        };
+
+        // Switch buddy requests sub-tab (All vs My posts)
+        window.switchBuddySubTab = (subTab) => {
+            currentBuddySubTab = subTab;
+            const btnAll = document.getElementById('btnSubTabAll');
+            const btnMy = document.getElementById('btnSubTabMy');
+            
+            if (subTab === 'all') {
+                if (btnAll) {
+                    btnAll.className = "pb-3 text-sm font-bold border-b-2 border-brand text-brand transition-all duration-300";
+                }
+                if (btnMy) {
+                    btnMy.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition-all duration-300 flex items-center gap-2";
+                }
+            } else {
+                if (btnAll) {
+                    btnAll.className = "pb-3 text-sm font-medium border-b-2 border-transparent text-gray-400 hover:text-white transition-all duration-300";
+                }
+                if (btnMy) {
+                    btnMy.className = "pb-3 text-sm font-bold border-b-2 border-brand text-brand transition-all duration-300 flex items-center gap-2";
+                }
+            }
+            filterBuddyRequests();
+        };
+
+        // Refresh action triggers rotation: rotates to a brand-new set of 10 random users
+        window.refreshBuddyRequests = () => {
+            const elements = getElements();
+            if (elements.refreshIcon) {
+                elements.refreshIcon.classList.remove('spin-active');
+                void elements.refreshIcon.offsetWidth; 
+                elements.refreshIcon.classList.add('spin-active');
+            }
+
+            if (elements.buddyMovieFilterInput) elements.buddyMovieFilterInput.value = '';
+            if (elements.buddyLocationFilterInput) elements.buddyLocationFilterInput.value = '';
+            if (elements.buddyTimeFilterInput) elements.buddyTimeFilterInput.value = '';
+            if (elements.buddyNameFilterInput) elements.buddyNameFilterInput.value = '';
+
+            displayedBuddies = shuffleArray(all100Buddies).slice(0, 10);
+            renderBuddyRequests(displayedBuddies);
+        };
+
+        // Reset Filters action button
+        window.resetFiltersAndRefresh = () => {
+            const elements = getElements();
+            if (elements.buddyMovieFilterInput) elements.buddyMovieFilterInput.value = '';
+            if (elements.buddyLocationFilterInput) elements.buddyLocationFilterInput.value = '';
+            if (elements.buddyTimeFilterInput) elements.buddyTimeFilterInput.value = '';
+            if (elements.buddyNameFilterInput) elements.buddyNameFilterInput.value = '';
+            window.refreshBuddyRequests();
+        };
+
+        // Render Buddy posts onto grid layout
+        function renderBuddyRequests(requests) {
+            const elements = getElements();
+            if (!elements.buddyRequestsGrid) return;
+
+            elements.buddyRequestsGrid.innerHTML = '';
+            
+            if (!requests || requests.length === 0) {
+                if (elements.emptyBuddyState) elements.emptyBuddyState.classList.remove('hidden');
+                return;
+            }
+            if (elements.emptyBuddyState) elements.emptyBuddyState.classList.add('hidden');
+
+            const myPostIds = JSON.parse(localStorage.getItem('my_ticket_plus_posts') || '[]');
+
+            requests.forEach((buddy) => {
+                const timeDiff = Date.now() - (buddy.createdAt || Date.now());
+                let timeStr = "Vừa xong";
+                if (timeDiff > 3600000 * 24) {
+                    timeStr = `${Math.floor(timeDiff / (3600000 * 24))} ngày trước`;
+                } else if (timeDiff > 3600000) {
+                    timeStr = `${Math.floor(timeDiff / 3600000)} giờ trước`;
+                } else if (timeDiff > 60000) {
+                    timeStr = `${Math.floor(timeDiff / 60000)} phút trước`;
+                }
+
+                const initial = buddy.nickname ? buddy.nickname.charAt(0).toUpperCase() : "U";
+
+                // Hiển thị nút hành động tùy thuộc vào quyền sở hữu bài đăng
+                let actionButtonsHtml = '';
+                if (myPostIds.includes(buddy.id)) {
+                    actionButtonsHtml = `
+                        <div class="flex gap-2 mt-auto">
+                            <button 
+                                onclick="window.openEditBuddyModal('${buddy.id}')"
+                                class="flex-1 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 shadow-md"
+                            >
+                                <i data-lucide="edit-3" class="w-3.5 h-3.5"></i> Sửa Tin
+                            </button>
+                            <button 
+                                onclick="window.deleteBuddyPost('${buddy.id}')"
+                                class="flex-1 py-2.5 bg-red-600/20 hover:bg-red-600 hover:text-white text-red-400 font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5 border border-red-500/30 shadow-md"
+                            >
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Xóa Tin
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    actionButtonsHtml = `
+                        <div class="mt-auto">
+                            <div id="contact-${buddy.id}" class="hidden mb-3 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-center">
+                                <span class="text-[10px] text-emerald-400 uppercase tracking-wider font-semibold block mb-1">Cách thức liên lạc</span>
+                                <span class="text-white text-xs font-bold block select-all break-words">${buddy.contact}</span>
+                            </div>
+                            <button 
+                                onclick="toggleContactReveal('${buddy.id}')"
+                                id="btn-${buddy.id}"
+                                class="w-full py-2.5 bg-brand-lightGray hover:bg-brand text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5"
+                            >
+                                <i data-lucide="message-square" class="w-4 h-4"></i> Xem Liên Hệ
+                            </button>
+                        </div>
+                    `;
+                }
+
+                const buddyCardHtml = `
+                    <div class="buddy-card bg-brand-gray p-6 rounded-2xl border border-gray-800/80 flex flex-col justify-between relative group overflow-hidden">
+                        <!-- Top header -->
+                        <div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-10 h-10 rounded-full bg-brand-dark/30 border border-brand/40 text-brand font-bold flex items-center justify-center text-base shadow-inner">
+                                        ${initial}
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-white text-sm leading-tight">${buddy.nickname}</h4>
+                                        <span class="text-[10px] text-gray-400 flex items-center gap-1">
+                                            <i data-lucide="clock" class="w-3 h-3 text-brand"></i> ${timeStr}
+                                        </span>
+                                    </div>
+                                </div>
+                                <span class="bg-brand/10 text-brand border border-brand/20 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                                    Tìm bạn
+                                </span>
+                            </div>
+
+                            <!-- Movie details -->
+                            <div class="mb-4 bg-black/30 p-3 rounded-xl border border-gray-800">
+                                <span class="text-[11px] text-brand font-bold uppercase tracking-wider block mb-0.5">Phim muốn xem</span>
+                                <span class="font-bold text-white text-sm line-clamp-1">${buddy.movieName}</span>
+                            </div>
+
+                            <!-- Show details: Date & Cinema location -->
+                            <div class="space-y-2 mb-4 text-xs">
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <i data-lucide="calendar" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                                    <span class="line-clamp-1">${buddy.dateTime}</span>
+                                </div>
+                                <div class="flex items-center gap-2 text-gray-300">
+                                    <i data-lucide="map-pin" class="w-4 h-4 text-gray-400 flex-shrink-0"></i>
+                                    <span class="line-clamp-1">${buddy.cinema}</span>
+                                </div>
+                            </div>
+
+                            <!-- Invitation message quote -->
+                            <p class="text-xs text-gray-400 italic bg-white/5 p-3 rounded-lg border-l-2 border-brand/60 leading-relaxed mb-6">
+                                "${buddy.message}"
+                            </p>
+                        </div>
+
+                        <!-- Action connect button container -->
+                        ${actionButtonsHtml}
+                    </div>
+                `;
+                elements.buddyRequestsGrid.insertAdjacentHTML('beforeend', buddyCardHtml);
+            });
+            lucide.createIcons();
+        }
+
+        // Action function: reveal contact detail safely
+        window.toggleContactReveal = (id) => {
+            const contactPanel = document.getElementById(`contact-${id}`);
+            const actionBtn = document.getElementById(`btn-${id}`);
+            
+            if (contactPanel.classList.contains('hidden')) {
+                contactPanel.classList.remove('hidden');
+                actionBtn.className = "w-full py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5";
+                actionBtn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i> Đã Hiển Thị`;
+            } else {
+                contactPanel.classList.add('hidden');
+                actionBtn.className = "w-full py-2.5 bg-brand-lightGray hover:bg-brand text-white font-bold text-xs rounded-xl transition flex items-center justify-center gap-1.5";
+                actionBtn.innerHTML = `<i data-lucide="message-square" class="w-4 h-4"></i> Xem Liên Hệ`;
+            }
+            lucide.createIcons();
+        };
+
+        // Filter / Search local search algorithm (Rule 2 requirement compliant)
+        function filterBuddyRequests() {
+            const elements = getElements();
+            const movieQuery = elements.buddyMovieFilterInput ? elements.buddyMovieFilterInput.value.toLowerCase().trim() : "";
+            const locationQuery = elements.buddyLocationFilterInput ? elements.buddyLocationFilterInput.value.toLowerCase().trim() : "";
+            const timeQuery = elements.buddyTimeFilterInput ? elements.buddyTimeFilterInput.value.toLowerCase().trim() : "";
+            const nameQuery = elements.buddyNameFilterInput ? elements.buddyNameFilterInput.value.toLowerCase().trim() : "";
+
+            let filtered = all100Buddies;
+
+            // Bước 1: Lọc theo sub-tab (Tất cả bài đăng hoặc Tin đăng cá nhân)
+            if (currentBuddySubTab === 'my') {
+                const myPostIds = JSON.parse(localStorage.getItem('my_ticket_plus_posts') || '[]');
+                filtered = filtered.filter(buddy => myPostIds.includes(buddy.id));
+            } else {
+                // Đối với tab Tất cả, nếu không có bộ lọc tìm kiếm thì hiển thị mặc định 10 bài ngẫu nhiên để tối ưu hóa hiệu suất
+                if (!movieQuery && !locationQuery && !timeQuery && !nameQuery) {
+                    renderBuddyRequests(displayedBuddies);
+                    return;
+                }
+            }
+
+            // Bước 2: Lọc theo các thanh tìm kiếm động
+            if (movieQuery) {
+                filtered = filtered.filter(buddy => buddy.movieName.toLowerCase().includes(movieQuery));
+            }
+            if (locationQuery) {
+                filtered = filtered.filter(buddy => buddy.cinema.toLowerCase().includes(locationQuery));
+            }
+            if (timeQuery) {
+                filtered = filtered.filter(buddy => buddy.dateTime.toLowerCase().includes(timeQuery));
+            }
+            if (nameQuery) {
+                filtered = filtered.filter(buddy => buddy.nickname.toLowerCase().includes(nameQuery));
+            }
+
+            renderBuddyRequests(filtered);
+        }
+
+        // TÍNH NĂNG CHỮ CHẠY (MARQUEE) TRONG Ô TÌM KIẾM
+        function setupInputMarquees() {
+            const inputs = [
+                { id: 'buddyMovieFilterInput', text: 'Tìm theo tên phim...' },
+                { id: 'buddyLocationFilterInput', text: 'Tìm theo rạp, địa điểm...' },
+                { id: 'buddyTimeFilterInput', text: 'Tìm theo thời gian chiếu...' },
+                { id: 'buddyNameFilterInput', text: 'Tìm theo tên người đăng...' }
+            ];
+
+            inputs.forEach(item => {
+                const input = document.getElementById(item.id);
+                if (!input) return;
+
+                let marqueeInterval = null;
+                let scrollInterval = null;
+                const gap = "\u00A0\u00A0\u00A0\u00A0\u00A0\u00A0"; // Khoảng trắng an toàn để vòng lặp chạy mượt
+                let currentText = item.text + gap;
+                let isFocused = false;
+
+                // Hàm chạy hiệu ứng Placeholder
+                const startMarquee = () => {
+                    if (marqueeInterval) clearInterval(marqueeInterval);
+                    marqueeInterval = setInterval(() => {
+                        if (!isFocused && input.value === '') {
+                            // Cắt ký tự đầu và chuyển xuống cuối dòng
+                            currentText = currentText.substring(1) + currentText[0];
+                            input.placeholder = currentText;
+                        }
+                    }, 200);
+                };
+
+                const stopMarquee = () => {
+                    if (marqueeInterval) clearInterval(marqueeInterval);
+                    input.placeholder = item.text;
+                    currentText = item.text + gap;
+                };
+
+                input.addEventListener('focus', () => {
+                    isFocused = true;
+                    stopMarquee();
+                });
+
+                input.addEventListener('blur', () => {
+                    isFocused = false;
+                    if (input.value === '') startMarquee();
+                });
+
+                // Tự động cuộn qua lại khi Hover vào một nội dung đã nhập bị che lấp
+                input.addEventListener('mouseenter', () => {
+                    if (input.value && input.scrollWidth > input.clientWidth) {
+                        if (scrollInterval) clearInterval(scrollInterval);
+                        scrollInterval = setInterval(() => {
+                            input.scrollLeft += 1;
+                            if (input.scrollLeft >= input.scrollWidth - input.clientWidth) {
+                                input.scrollLeft = 0;
+                            }
+                        }, 40);
+                    }
+                });
+
+                input.addEventListener('mouseleave', () => {
+                    if (scrollInterval) {
+                        clearInterval(scrollInterval);
+                        input.scrollLeft = 0;
+                    }
+                });
+
+                // Khởi động lúc ban đầu
+                if (input.value === '') {
+                    startMarquee();
+                }
+            });
+        }
+
+        // Initialize App & Auth setup on loading
+        window.addEventListener('DOMContentLoaded', async () => {
+            renderEntertainmentMovies();
+            renderHealingMovies();
+            setupInputMarquees();
+            await initAuthentication();
+        });
+
+        // ================= AI CHAT BOT LOGIC =================
+        let chatHistory = [];
+
+        window.sendQuickMessage = (text) => {
+            const elements = getElements();
+            if (elements.chatInput) {
+                elements.chatInput.value = text;
+                if (elements.chatForm) elements.chatForm.dispatchEvent(new Event('submit', { cancelable: true, bubbles: true }));
+            }
+        };
+
+        window.clearChat = () => {
+            chatHistory = [];
+            const elements = getElements();
+            if (elements.chatMessages) {
+                elements.chatMessages.innerHTML = `
+                <div class="flex gap-3 max-w-[85%]">
+                    <div class="w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center border border-brand/40 shrink-0 mt-1">
+                        <i data-lucide="bot" class="w-4 h-4 text-brand"></i>
+                    </div>
+                    <div class="bg-gray-800/80 border border-gray-700 p-3.5 rounded-2xl rounded-tl-none text-sm text-gray-200 leading-relaxed">
+                        Lịch sử trò chuyện đã được xóa. Hôm nay bạn muốn xem thể loại gì nào?
+                    </div>
+                </div>
+                `;
+                lucide.createIcons();
+            }
+        };
+
+        const chatForm = document.getElementById('chatForm');
+        if (chatForm) {
+            chatForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const elements = getElements();
+                const input = elements.chatInput.value.trim();
+                
+                if (!input) return;
+
+                appendChatMessage('user', input);
+                elements.chatInput.value = '';
+                elements.chatInput.disabled = true;
+
+                chatHistory.push({ role: 'user', parts: [{ text: input }] });
+
+                if (elements.chatTypingIndicator) elements.chatTypingIndicator.classList.remove('hidden');
+                elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+
+                try {
+                    const responseText = await fetchAIResponse(chatHistory);
+                    
+                    if (elements.chatTypingIndicator) elements.chatTypingIndicator.classList.add('hidden');
+                    appendChatMessage('model', responseText);
+                    chatHistory.push({ role: 'model', parts: [{ text: responseText }] });
+                    
+                } catch (error) {
+                    console.error("Chat error:", error);
+                    if (elements.chatTypingIndicator) elements.chatTypingIndicator.classList.add('hidden');
+                    appendChatMessage('model', 'Xin lỗi, hệ thống AI đang gặp chút sự có kết nối. Bạn vui lòng thử lại sau nhé!');
+                } finally {
+                    elements.chatInput.disabled = false;
+                    elements.chatInput.focus();
+                }
+            });
+        }
+
+        function formatMarkdownToHTML(text) {
+            let html = text.replace(/\*\*(.*?)\*\"/g, '<strong class="text-white">$1</strong>');
+            html = html.replace(/\*(.*?)\*/g, '<em class="text-gray-300">$1</em>');
+            html = html.replace(/\n/g, '<br>');
+            return html;
+        }
+
+        function appendChatMessage(role, text) {
+            const elements = getElements();
+            if (!elements.chatMessages) return;
+
+            let html = '';
+            const formattedText = formatMarkdownToHTML(text);
+
+            if (role === 'user') {
+                html = `
+                <div class="flex justify-end gap-3 w-full">
+                    <div class="bg-brand/20 border border-brand/30 p-3.5 rounded-2xl rounded-br-none text-sm text-white max-w-[85%] leading-relaxed shadow-sm">
+                        ${formattedText}
+                    </div>
+                    <div class="w-8 h-8 rounded-full bg-gray-700 flex items-center justify-center shrink-0 mt-1">
+                        <i data-lucide="user" class="w-4 h-4 text-gray-300"></i>
+                    </div>
+                </div>`;
+            } else {
+                html = `
+                <div class="flex gap-3 max-w-[90%]">
+                    <div class="w-8 h-8 rounded-full bg-brand/20 flex items-center justify-center border border-brand/40 shrink-0 mt-1">
+                        <i data-lucide="bot" class="w-4 h-4 text-brand"></i>
+                    </div>
+                    <div class="bg-gray-800/80 border border-gray-700 p-3.5 rounded-2xl rounded-tl-none text-sm text-gray-200 leading-relaxed shadow-sm">
+                        ${formattedText}
+                    </div>
+                </div>`;
+            }
+
+            elements.chatMessages.insertAdjacentHTML('beforeend', html);
+            lucide.createIcons();
+            
+            elements.chatMessages.scrollTop = elements.chatMessages.scrollHeight;
+        }
+
+        async function fetchAIResponse(history) {
+            const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent?key=${apiKey}`;
+            const systemPrompt = `Bạn là chuyên gia tư vấn phim ảnh của hệ thống Ticket+ vào tháng 5 năm 2026. 
+            Nhiệm vụ của bạn là trò chuyện với người dùng, phân tích sở thích, tâm trạng, thể loại để đưa ra các gợi ý phim chất lượng và cá nhân hóa nhất.
+            Hãy trả lời một cách tự nhiên, thân thiện và nhiệt tình bằng tiếng Việt.
+            Nếu gợi ý phim, hãy trình bày rõ: Tên phim (Năm sản xuất) - Lý do vì sao nó phù hợp với họ.
+            Sử dụng in đậm (**) cho tên phim để dễ nhìn. Giữ câu trả lời súc tích, tránh quá dài dòng. Nếu cần, có thể hỏi ngược lại để hiểu rõ hơn nhu cầu của họ.`;
+
+            const payload = {
+                contents: history,
+                systemInstruction: { parts: [{ text: systemPrompt }] }
+            };
+
+            const data = await fetchWithRetry(endpoint, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload)
+            });
+
+            const textResponse = data.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (!textResponse) throw new Error("API returned blank data");
+            
+            return textResponse;
+        }
+
+    </script>
+</body>
+</html>
